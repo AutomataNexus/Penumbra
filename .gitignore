@@ -23,3 +23,6 @@ target/criterion/
 # Internal documentation — never commit
 PRD.md
 PROGRESS.md
+
+# Site — deployed separately
+site/
