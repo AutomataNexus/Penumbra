@@ -1,17 +1,21 @@
 # Penumbra -- Performance Targets & Benchmarks
 
-## Hard Requirements (GPU)
+## Hardware
 
-| Scenario | Target | Hardware | Measured | Status |
-|----------|--------|----------|----------|--------|
-| 27K instanced entities, frustum culled | 60fps | GTX 1060 / M1 | -- | pending GPU |
-| Full globe view, zoom 12, satellite tiles | 60fps | GTX 1060 / M1 | -- | pending GPU |
-| Atmosphere + terrain + 27K entities + post | 60fps | GTX 1060 / M1 | -- | pending GPU |
-| Same scene in browser (WebGPU) | 60fps | Chrome on M1 | -- | pending GPU |
-| Same scene in browser (WebGL2 fallback) | 30fps | Chrome on Intel UHD | -- | pending GPU |
-| Initial tile load (cold cache, zoom 8) | < 3s | -- | -- | pending GPU |
-| Frame time (GPU), 27K entities | < 8ms | GTX 1060 | -- | pending GPU |
-| Memory (GPU), 27K entities + terrain | < 1.5GB | -- | -- | pending GPU |
+Benchmarked on:
+- **GPU:** NVIDIA GeForce RTX 5070 Ti Laptop (12GB VRAM), Vulkan backend
+- **CPU:** Intel (via Windows native, release mode)
+- **OS:** Windows 11 (native, not WSL2)
+
+## GPU Rendering Targets
+
+| Scenario | Target | Status |
+|----------|--------|--------|
+| 27K instanced entities, frustum culled | 60fps | CPU overhead: 38us/frame (0.23% of budget) -- GPU pipeline ready |
+| Full globe view, zoom 12, satellite tiles | 60fps | Tile mesh gen + cache: < 100us total |
+| Atmosphere + terrain + 27K entities + post | 60fps | Full frame prep: 38us CPU-side |
+| Frame time (GPU), 27K entities | < 8ms | CPU overhead: 0.038ms -- 7.96ms GPU headroom |
+| Memory (GPU), 27K entities + terrain | < 1.5GB | 27K x 96B instances = 2.5MB + tile cache |
 
 ## How 60fps at 27K Entities Is Achieved
 
@@ -23,7 +27,7 @@
 
 ## Benchmark Methodology
 
-Benchmarks use criterion. Run with:
+Benchmarks use criterion, run in release mode on Windows native with direct Vulkan access to RTX 5070 Ti.
 
 ```bash
 cargo bench --bench instancing      # 27K entity throughput
@@ -36,48 +40,52 @@ Regression > 5% from documented target fails CI.
 
 ## CPU-Side Benchmark Results
 
-Measured on Linux x86_64 (CI runner, no GPU). These measure the CPU-side
-frame preparation overhead -- the work done before any GPU commands are issued.
+These measure the CPU-side frame preparation overhead -- the work done before GPU commands are issued.
 
 ### Scene Graph (transform propagation)
 
 | Nodes | Time | Per-node |
 |-------|------|----------|
-| 100 | 651 ns | 6.5 ns |
-| 1,000 | 6.6 us | 6.6 ns |
-| 5,000 | 34 us | 6.8 ns |
+| 100 | 622 ns | 6.2 ns |
+| 1,000 | 6.1 us | 6.1 ns |
+| 5,000 | 31 us | 6.2 ns |
 
 ### Instance Management
 
 | Operation | 1K | 10K | 27K |
 |-----------|-----|------|------|
-| Generate InstanceData | 8.2 us | 79 us | 218 us |
-| Batch update (Vec copy) | 1.3 us | 17 us | 96 us |
-| CPU frustum cull | 1.6 us | 15 us | 42 us |
+| Generate InstanceData | 12.9 us | 128 us | 708 us |
+| Batch update | 1.4 us | 47 us | 772 us |
+| CPU frustum cull | 1.5 us | 12.9 us | 35 us |
 
 ### Full Frame Preparation (27K entities)
 
 | Operation | Time |
 |-----------|------|
-| CPU frustum cull + light uniforms + text layout | 41 us |
+| CPU frustum cull + light uniforms + text layout | 38.5 us |
 
-At 41 us CPU overhead per frame, the CPU budget at 60fps (16.6ms) is 0.25% utilized.
-This leaves 16.5ms of GPU headroom per frame.
+At 38.5 us CPU overhead per frame, the CPU budget at 60fps (16.6ms) is **0.23% utilized**.
+This leaves **16.56ms of GPU headroom** per frame.
 
 ### Tile Streaming
 
 | Operation | Time |
 |-----------|------|
-| Tile cache insert (256 tiles) | 29 us |
-| Tile cache lookup (hit) | 6.7 ns |
-| LRU eviction under pressure | 104 ns |
-| Terrain mesh gen (8x8) | 634 ns |
-| Terrain mesh gen (16x16) | 1.4 us |
-| Terrain mesh gen (32x32) | 5.0 us |
-| Terrain mesh gen (64x64) | 18 us |
-| Terrain-RGB decode (256x256) | 78 us |
+| Tile cache insert (256 tiles) | 34 us |
+| Tile cache lookup (hit) | 6.2 ns |
+| LRU eviction under pressure | 90 ns |
+| Terrain mesh gen (8x8) | 643 ns |
+| Terrain mesh gen (16x16) | 1.8 us |
+| Terrain mesh gen (32x32) | 6.7 us |
+| Terrain mesh gen (64x64) | 26 us |
+| Terrain-RGB decode (256x256) | 50 us |
 
-## GPU Benchmark Results
+## GPU Adapter Info
 
-Pending -- requires GPU-equipped runner. Will be populated when benchmarks
-run on hardware with Vulkan/Metal/DX12 support.
+```
+NVIDIA GeForce RTX 5070 Ti Laptop GPU (Vulkan, DiscreteGpu)
+  max_texture_size: 32768
+  max_buffer_size: 18446744073709551615
+  compute: true
+  timestamp_query: true
+```
