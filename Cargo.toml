@@ -36,6 +36,7 @@ members = [
     "examples/globe",
     "examples/tactical_globe",
     "examples/wasm",
+    "examples/windowed",
 ]
 
 [workspace.package]

@@ -113,9 +113,9 @@ impl Renderer {
         })?;
         self.depth_texture = Some(depth);
 
-        // Camera uniform buffer (CameraUniforms = 288 bytes, round up to 304 for alignment)
+        // Camera uniform buffer (CameraUniforms = 352 bytes)
         let cam_buf = self.backend.create_buffer(BufferDescriptor {
-            size: 320,
+            size: std::mem::size_of::<crate::frame::CameraUniforms>() as u64,
             usage: BufferUsage::UNIFORM | BufferUsage::COPY_DST,
             label: Some("camera_uniforms".to_string()),
             mapped_at_creation: false,
@@ -263,8 +263,63 @@ impl Renderer {
 
                 self.backend.set_pipeline(pass, pipeline);
 
-                // TODO: Create and set camera bind group
-                // TODO: For each draw call, set model transform and draw
+                // Create camera bind group
+                let cam_bg = self.backend.create_bind_group(
+                    &BindGroupLayoutDescriptor {
+                        entries: vec![BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: ShaderStages::VERTEX_FRAGMENT,
+                            ty: BindingType::UniformBuffer,
+                        }],
+                        label: Some("camera_bg".to_string()),
+                    },
+                    &[penumbra_backend::traits::BindGroupEntry::Buffer {
+                        binding: 0,
+                        buffer: cam_buf.id,
+                        offset: 0,
+                        size: std::mem::size_of::<crate::frame::CameraUniforms>() as u64,
+                    }],
+                )?;
+                self.backend.set_bind_group(pass, 0, cam_bg);
+
+                // Execute each draw call
+                let transform_buf_id = self.transform_buffer.as_ref().map(|b| b.id);
+                for draw in frame.draw_calls() {
+                    if let Some(tb_id) = transform_buf_id {
+                        // Upload model + normal matrix
+                        let model = draw.transform;
+                        let normal = model.inverse().transpose();
+                        let mut transform_data = [0u8; 128];
+                        transform_data[..64]
+                            .copy_from_slice(bytemuck::bytes_of(&model.to_cols_array_2d()));
+                        transform_data[64..128]
+                            .copy_from_slice(bytemuck::bytes_of(&normal.to_cols_array_2d()));
+                        self.backend.write_buffer(tb_id, 0, &transform_data);
+
+                        // Create model bind group
+                        let model_bg = self.backend.create_bind_group(
+                            &BindGroupLayoutDescriptor {
+                                entries: vec![BindGroupLayoutEntry {
+                                    binding: 0,
+                                    visibility: ShaderStages::VERTEX,
+                                    ty: BindingType::UniformBuffer,
+                                }],
+                                label: Some("model_bg".to_string()),
+                            },
+                            &[penumbra_backend::traits::BindGroupEntry::Buffer {
+                                binding: 0,
+                                buffer: tb_id,
+                                offset: 0,
+                                size: 128,
+                            }],
+                        )?;
+                        self.backend.set_bind_group(pass, 1, model_bg);
+                    }
+
+                    // Draw the mesh
+                    self.backend
+                        .draw_mesh(pass, draw.mesh, 0..draw.instance_count);
+                }
 
                 self.backend.end_render_pass(pass);
             }

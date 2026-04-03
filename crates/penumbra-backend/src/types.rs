@@ -458,6 +458,10 @@ pub struct GpuMesh {
     pub vertex_count: u32,
     pub index_count: u32,
     pub aabb: Aabb,
+    pub vertex_buffer: BufferId,
+    pub index_buffer: BufferId,
+    pub vertex_buffer_size: u64,
+    pub index_buffer_size: u64,
 }
 
 #[derive(Debug, Clone)]

@@ -78,6 +78,9 @@ pub trait RenderBackend: MaybeSend + MaybeSync {
         instances: Range<u32>,
     );
 
+    /// Draw a mesh by its ID. The backend handles vertex/index buffer binding internally.
+    fn draw_mesh(&mut self, handle: RenderPassHandle, mesh: MeshId, instances: Range<u32>);
+
     // ── Compute pass ──
 
     fn begin_compute_pass(&mut self) -> ComputePassHandle;

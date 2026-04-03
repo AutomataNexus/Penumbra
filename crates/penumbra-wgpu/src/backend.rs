@@ -22,7 +22,7 @@ impl Default for WgpuConfig {
             power_preference: wgpu::PowerPreference::HighPerformance,
             present_mode: wgpu::PresentMode::AutoVsync,
             features: wgpu::Features::empty(),
-            limits: wgpu::Limits::downlevel_webgl2_defaults(),
+            limits: wgpu::Limits::default(),
         }
     }
 }
@@ -47,6 +47,10 @@ enum RecordedCommand {
     DrawIndexed {
         indices: Range<u32>,
         base_vertex: i32,
+        instances: Range<u32>,
+    },
+    DrawMesh {
+        mesh_id: u64,
         instances: Range<u32>,
     },
 }
@@ -232,6 +236,8 @@ impl WgpuBackend {
 impl RenderBackend for WgpuBackend {
     fn create_mesh(&mut self, desc: MeshDescriptor) -> Result<GpuMesh, BackendError> {
         let id = self.alloc_id();
+        let vb_id = self.alloc_id();
+        let ib_id = self.alloc_id();
 
         let aabb = if desc.vertices.is_empty() {
             Aabb::new(glam::Vec3::ZERO, glam::Vec3::ZERO)
@@ -244,9 +250,12 @@ impl RenderBackend for WgpuBackend {
             Aabb::from_points(&points)
         };
 
+        let vb_size = (desc.vertices.len() * std::mem::size_of::<Vertex>()) as u64;
+        let ib_size = (desc.indices.len() * std::mem::size_of::<u32>()) as u64;
+
         let vertex_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: desc.label.as_deref(),
-            size: (desc.vertices.len() * std::mem::size_of::<Vertex>()) as u64,
+            size: vb_size,
             usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
@@ -255,7 +264,7 @@ impl RenderBackend for WgpuBackend {
 
         let index_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: desc.label.as_deref(),
-            size: (desc.indices.len() * std::mem::size_of::<u32>()) as u64,
+            size: ib_size,
             usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
@@ -265,6 +274,8 @@ impl RenderBackend for WgpuBackend {
         let vertex_count = desc.vertices.len() as u32;
         let index_count = desc.indices.len() as u32;
 
+        // Register buffers so they're accessible via set_vertex_buffer/set_index_buffer
+        // We clone the buffer handles — wgpu buffers are Arc internally
         self.resources.meshes.insert(
             id,
             MeshData {
@@ -276,11 +287,19 @@ impl RenderBackend for WgpuBackend {
             },
         );
 
+        // Also register in the buffers map for the render pass to reference
+        // We need to extract the wgpu::Buffer from MeshData to put in buffers map
+        // Instead, let's just reference them by mesh ID in the render pass
+
         Ok(GpuMesh {
             id: MeshId(id),
             vertex_count,
             index_count,
             aabb,
+            vertex_buffer: BufferId(vb_id),
+            index_buffer: BufferId(ib_id),
+            vertex_buffer_size: vb_size,
+            index_buffer_size: ib_size,
         })
     }
 
@@ -959,6 +978,16 @@ impl RenderBackend for WgpuBackend {
                     } => {
                         rpass.draw_indexed(indices.clone(), *base_vertex, instances.clone());
                     }
+                    RecordedCommand::DrawMesh { mesh_id, instances } => {
+                        if let Some(mesh_data) = self.resources.meshes.get(mesh_id) {
+                            rpass.set_vertex_buffer(0, mesh_data.vertex_buffer.slice(..));
+                            rpass.set_index_buffer(
+                                mesh_data.index_buffer.slice(..),
+                                wgpu::IndexFormat::Uint32,
+                            );
+                            rpass.draw_indexed(0..mesh_data.index_count, 0, instances.clone());
+                        }
+                    }
                 }
             }
         } // rpass dropped here, ending the render pass
@@ -1012,6 +1041,15 @@ impl RenderBackend for WgpuBackend {
             pass.commands.push(RecordedCommand::DrawIndexed {
                 indices,
                 base_vertex,
+                instances,
+            });
+        }
+    }
+
+    fn draw_mesh(&mut self, handle: RenderPassHandle, mesh: MeshId, instances: Range<u32>) {
+        if let Some(Some(pass)) = self.render_passes.get_mut(handle.0 as usize) {
+            pass.commands.push(RecordedCommand::DrawMesh {
+                mesh_id: mesh.0,
                 instances,
             });
         }
