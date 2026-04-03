@@ -29,6 +29,7 @@ members = [
     "crates/penumbra-asset",
     "crates/penumbra-winit",
     "crates/penumbra-web",
+    "crates/penumbra-cli",
     "examples/hello_cube",
     "examples/pbr_scene",
     "examples/instanced_entities",
@@ -110,11 +111,11 @@ criterion = { workspace = true }
 
 [[bin]]
 name = "gpu_probe"
-path = "benches/gpu_probe.rs"
+path = "src/bin/gpu_probe.rs"
 
 [[bin]]
 name = "gpu_render_bench"
-path = "benches/gpu_render_bench.rs"
+path = "src/bin/gpu_render_bench.rs"
 
 # ── Benchmarks ──
 

@@ -1,0 +1,16 @@
+[package]
+name = "penumbra-cli"
+description = "CLI tool for Penumbra 3D rendering SDK"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+
+[[bin]]
+name = "penumbra"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }

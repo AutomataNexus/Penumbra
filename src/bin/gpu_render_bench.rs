@@ -217,37 +217,46 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         }],
     });
 
+    let ctx = GpuCtx {
+        device: &device,
+        queue: &queue,
+        color_view: &color_view,
+        depth_view: &depth_view,
+        pipeline: &pipeline,
+        bind_group: &bind_group,
+    };
+
     // ── Warmup (5 frames) ──
     println!("Warming up...");
     for _ in 0..5 {
-        render_frame(&device, &queue, &color_view, &depth_view, &pipeline, &bind_group, 27_225);
+        render_frame(&ctx, 27_225);
     }
 
     // ── Benchmark scenarios ──
 
     // Scenario 1: 27K instanced entities
     println!("\n--- Scenario 1: 27K instanced entities (1920x1080, depth + color) ---");
-    let times = bench_frames(&device, &queue, &color_view, &depth_view, &pipeline, &bind_group, 27_225, 200);
+    let times = bench_frames(&ctx, 27_225, 200);
     print_stats("27K entities", &times);
 
     // Scenario 2: 10K instanced entities
     println!("\n--- Scenario 2: 10K instanced entities ---");
-    let times = bench_frames(&device, &queue, &color_view, &depth_view, &pipeline, &bind_group, 10_000, 200);
+    let times = bench_frames(&ctx, 10_000, 200);
     print_stats("10K entities", &times);
 
     // Scenario 3: 1K instanced entities
     println!("\n--- Scenario 3: 1K instanced entities ---");
-    let times = bench_frames(&device, &queue, &color_view, &depth_view, &pipeline, &bind_group, 1_000, 200);
+    let times = bench_frames(&ctx, 1_000, 200);
     print_stats("1K entities", &times);
 
     // Scenario 4: 50K instanced entities (stress test)
     println!("\n--- Scenario 4: 50K instanced entities (stress test) ---");
-    let times = bench_frames(&device, &queue, &color_view, &depth_view, &pipeline, &bind_group, 50_000, 100);
+    let times = bench_frames(&ctx, 50_000, 100);
     print_stats("50K entities", &times);
 
     // Scenario 5: Empty frame (baseline)
     println!("\n--- Scenario 5: Empty frame (baseline) ---");
-    let times = bench_frames(&device, &queue, &color_view, &depth_view, &pipeline, &bind_group, 0, 200);
+    let times = bench_frames(&ctx, 0, 200);
     print_stats("Empty frame", &times);
 
     println!("\n=== Benchmark complete ===");
@@ -255,15 +264,22 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     println!("If 27K median < 8ms, the 60fps target is met.");
 }
 
-fn render_frame(
-    device: &wgpu::Device,
-    queue: &wgpu::Queue,
-    color_view: &wgpu::TextureView,
-    depth_view: &wgpu::TextureView,
-    pipeline: &wgpu::RenderPipeline,
-    bind_group: &wgpu::BindGroup,
-    instance_count: u32,
-) {
+struct GpuCtx<'a> {
+    device: &'a wgpu::Device,
+    queue: &'a wgpu::Queue,
+    color_view: &'a wgpu::TextureView,
+    depth_view: &'a wgpu::TextureView,
+    pipeline: &'a wgpu::RenderPipeline,
+    bind_group: &'a wgpu::BindGroup,
+}
+
+fn render_frame(ctx: &GpuCtx, instance_count: u32) {
+    let device = ctx.device;
+    let queue = ctx.queue;
+    let color_view = ctx.color_view;
+    let depth_view = ctx.depth_view;
+    let pipeline = ctx.pipeline;
+    let bind_group = ctx.bind_group;
     let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
         label: Some("frame"),
     });
@@ -301,20 +317,11 @@ fn render_frame(
     device.poll(wgpu::Maintain::Wait); // Wait for GPU to finish
 }
 
-fn bench_frames(
-    device: &wgpu::Device,
-    queue: &wgpu::Queue,
-    color_view: &wgpu::TextureView,
-    depth_view: &wgpu::TextureView,
-    pipeline: &wgpu::RenderPipeline,
-    bind_group: &wgpu::BindGroup,
-    instance_count: u32,
-    num_frames: usize,
-) -> Vec<Duration> {
+fn bench_frames(ctx: &GpuCtx, instance_count: u32, num_frames: usize) -> Vec<Duration> {
     let mut times = Vec::with_capacity(num_frames);
     for _ in 0..num_frames {
         let start = Instant::now();
-        render_frame(device, queue, color_view, depth_view, pipeline, bind_group, instance_count);
+        render_frame(ctx, instance_count);
         times.push(start.elapsed());
     }
     times
