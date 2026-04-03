@@ -6,6 +6,16 @@
 
 <p align="center"><strong>General-purpose 3D rendering SDK for Rust.</strong></p>
 
+<p align="center">
+  <a href="https://github.com/AutomataNexus/Penumbra/actions/workflows/ci.yml"><img src="https://github.com/AutomataNexus/Penumbra/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/rust-1.85+-orange?logo=rust" alt="Rust 1.85+">
+  <img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue" alt="License">
+  <img src="https://img.shields.io/badge/crates-18-green" alt="18 Crates">
+  <img src="https://img.shields.io/badge/tests-116-brightgreen" alt="116 Tests">
+  <img src="https://img.shields.io/badge/WASM-ready-blueviolet" alt="WASM Ready">
+  <img src="https://img.shields.io/badge/backend-wgpu%2024-informational" alt="wgpu 24">
+</p>
+
 Penumbra sits between raw GPU bindings (wgpu) and full game engines (Bevy). It provides a complete 3D rendering toolkit that works natively on desktop (Vulkan, Metal, DX12) and in the browser (WebGPU, WebGL2 via WASM), with no game engine baggage, no ECS mandate, and no opinionated application framework.
 
 ---
