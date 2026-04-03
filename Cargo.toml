@@ -101,9 +101,20 @@ penumbra-asset = { path = "crates/penumbra-asset" }
 penumbra-winit = { path = "crates/penumbra-winit" }
 penumbra-web = { path = "crates/penumbra-web" }
 glam = { workspace = true }
+wgpu = { workspace = true }
+pollster = { workspace = true }
+bytemuck = { workspace = true }
 
 [dev-dependencies]
 criterion = { workspace = true }
+
+[[bin]]
+name = "gpu_probe"
+path = "benches/gpu_probe.rs"
+
+[[bin]]
+name = "gpu_render_bench"
+path = "benches/gpu_render_bench.rs"
 
 # ── Benchmarks ──
 
