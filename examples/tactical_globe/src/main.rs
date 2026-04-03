@@ -9,13 +9,16 @@ use glam::{Mat4, Vec3};
 use penumbra_atmosphere::{AtmosphereConfig, AtmosphereRenderer};
 use penumbra_camera::OrbitController;
 use penumbra_core::{Renderer, RendererConfig};
-use penumbra_geo::{GeoPosition, wgs84_to_enu, lat_lon_to_tile};
+use penumbra_geo::{GeoPosition, lat_lon_to_tile, wgs84_to_enu};
 use penumbra_immediate::ImmediateRenderer;
 use penumbra_instance::{InstanceBatchDesc, InstanceData, InstanceManager, cpu_frustum_cull};
 use penumbra_pbr::{Light, PbrConfig, PbrPipeline};
-use penumbra_post::{PostPipeline, ToneMapping, Fxaa, ColorGrading};
+use penumbra_post::{ColorGrading, Fxaa, PostPipeline, ToneMapping};
 use penumbra_scene::Scene;
-use penumbra_terrain::{TileCoord, TileCache, TileData, TerrainData, TerrainConfig, XyzTileSource, TileFormat, generate_tile_mesh};
+use penumbra_terrain::{
+    TerrainConfig, TerrainData, TileCache, TileCoord, TileData, TileFormat, XyzTileSource,
+    generate_tile_mesh,
+};
 use penumbra_text::{FontAtlas, FontId, GlyphMetrics, TextBatch, layout_text};
 use penumbra_wgpu::{WgpuBackend, WgpuConfig};
 
@@ -29,23 +32,33 @@ fn main() {
     // ── Backend + renderer ──
     let backend = WgpuBackend::headless(1920, 1080, WgpuConfig::default())
         .expect("Failed to create wgpu backend");
-    let mut renderer = Renderer::new(backend, RendererConfig {
-        width: 1920,
-        height: 1080,
-        hdr: true,
-        ..RendererConfig::default()
-    });
+    let mut renderer = Renderer::new(
+        backend,
+        RendererConfig {
+            width: 1920,
+            height: 1080,
+            hdr: true,
+            ..RendererConfig::default()
+        },
+    );
 
     println!("=== NexusPulse Tactical Globe Demo ===");
     println!("Backend: {}", renderer.backend_name());
 
     // ── Geographic origin (Fort Wayne, IN — NexusPulse HQ) ──
-    let origin = GeoPosition { lat: 41.0793, lon: -85.1394, alt: 0.0 };
+    let origin = GeoPosition {
+        lat: 41.0793,
+        lon: -85.1394,
+        alt: 0.0,
+    };
 
     // ── Tile setup ──
     let zoom = 12_u8;
     let center_tile = lat_lon_to_tile(origin.lat, origin.lon, zoom);
-    println!("Center tile: ({}, {}) at zoom {}", center_tile.x, center_tile.y, zoom);
+    println!(
+        "Center tile: ({}, {}) at zoom {}",
+        center_tile.x, center_tile.y, zoom
+    );
 
     let _imagery_source = XyzTileSource::new(
         "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -67,11 +80,14 @@ fn main() {
                 zoom as u32,
             );
             let heights = vec![0.0_f32; verts as usize];
-            cache.insert(coord, TileData::Terrain(TerrainData {
-                heights: heights.clone(),
-                width: res + 1,
-                height: res + 1,
-            }));
+            cache.insert(
+                coord,
+                TileData::Terrain(TerrainData {
+                    heights: heights.clone(),
+                    width: res + 1,
+                    height: res + 1,
+                }),
+            );
             let mesh = generate_tile_mesh(coord, &heights, res, 1.0, terrain_config.height_scale);
             let gpu_mesh = renderer.create_mesh(mesh.descriptor).expect("terrain mesh");
             renderer.destroy_mesh(gpu_mesh.id);
@@ -169,11 +185,23 @@ fn main() {
     }
 
     let total = aircraft_instances.len() + ground_instances.len();
-    println!("Entities generated: {} ({} aircraft, {} ground)", total, aircraft_instances.len(), ground_instances.len());
-    println!("Instance buffer: {:.2} MB", (total * std::mem::size_of::<InstanceData>()) as f64 / (1024.0 * 1024.0));
+    println!(
+        "Entities generated: {} ({} aircraft, {} ground)",
+        total,
+        aircraft_instances.len(),
+        ground_instances.len()
+    );
+    println!(
+        "Instance buffer: {:.2} MB",
+        (total * std::mem::size_of::<InstanceData>()) as f64 / (1024.0 * 1024.0)
+    );
 
-    instance_mgr.update_batch(aircraft_batch, aircraft_instances.clone()).expect("update aircraft");
-    instance_mgr.update_batch(ground_batch, ground_instances.clone()).expect("update ground");
+    instance_mgr
+        .update_batch(aircraft_batch, aircraft_instances.clone())
+        .expect("update aircraft");
+    instance_mgr
+        .update_batch(ground_batch, ground_instances.clone())
+        .expect("update ground");
 
     // ── Camera (globe orbit) ──
     let mut orbit = OrbitController {
@@ -193,16 +221,22 @@ fn main() {
     // ── CPU frustum culling ──
     let vis_air = cpu_frustum_cull(&aircraft_instances, vp);
     let vis_gnd = cpu_frustum_cull(&ground_instances, vp);
-    println!("Visible: {} aircraft, {} ground ({} total / {} = {:.1}%)",
-        vis_air.len(), vis_gnd.len(),
-        vis_air.len() + vis_gnd.len(), total,
+    println!(
+        "Visible: {} aircraft, {} ground ({} total / {} = {:.1}%)",
+        vis_air.len(),
+        vis_gnd.len(),
+        vis_air.len() + vis_gnd.len(),
+        total,
         ((vis_air.len() + vis_gnd.len()) as f64 / total as f64) * 100.0
     );
 
     // ── SDF Text / Labels ──
     let mut font_atlas = FontAtlas::new(FontId(0), 512, 512);
     // Add some placeholder glyph metrics for common chars
-    for (i, ch) in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -:".chars().enumerate() {
+    for (i, ch) in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -:"
+        .chars()
+        .enumerate()
+    {
         font_atlas.add_glyph(GlyphMetrics {
             codepoint: ch,
             advance: 8.0,
@@ -216,10 +250,18 @@ fn main() {
     }
 
     // Layout HUD text
-    let hud_layout = layout_text(&font_atlas, "ENTITIES: 27000 | HOSTILE: 9000 | FRIENDLY: 9000", 14.0);
+    let hud_layout = layout_text(
+        &font_atlas,
+        "ENTITIES: 27000 | HOSTILE: 9000 | FRIENDLY: 9000",
+        14.0,
+    );
     let mut text_batch = TextBatch::new();
     text_batch.add_layout(&hud_layout, 0.0, [1.0, 1.0, 1.0, 1.0]);
-    println!("HUD text: {} glyphs, {} vertices", hud_layout.glyphs.len(), text_batch.vertex_count());
+    println!(
+        "HUD text: {} glyphs, {} vertices",
+        hud_layout.glyphs.len(),
+        text_batch.vertex_count()
+    );
 
     // ── Immediate mode HUD overlay ──
     let mut imm = ImmediateRenderer::new();
@@ -242,7 +284,8 @@ fn main() {
     imm.draw_line(Vec3::ZERO, Vec3::new(0.0, 0.0, 100.0), [1.0, 0.0, 0.0, 1.0]); // North
     imm.draw_line(Vec3::ZERO, Vec3::new(100.0, 0.0, 0.0), [0.0, 0.0, 1.0, 1.0]); // East
 
-    println!("Immediate mode: {} line verts, {} tri verts",
+    println!(
+        "Immediate mode: {} line verts, {} tri verts",
         imm.batch().line_vertices.len(),
         imm.batch().triangle_vertices.len()
     );
@@ -269,7 +312,12 @@ fn main() {
 
     // ── Render frame ──
     let mut frame = renderer.begin_frame().expect("begin_frame");
-    frame.set_camera(camera.view_matrix(), camera.projection_matrix(), camera.near, camera.far);
+    frame.set_camera(
+        camera.view_matrix(),
+        camera.projection_matrix(),
+        camera.near,
+        camera.far,
+    );
     renderer.end_frame(frame).expect("end_frame");
 
     // ── Summary ──

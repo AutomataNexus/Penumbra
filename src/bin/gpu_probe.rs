@@ -10,13 +10,22 @@ fn main() {
     println!("=== Available adapters ===");
     for adapter in instance.enumerate_adapters(wgpu::Backends::all()) {
         let info = adapter.get_info();
-        println!("  {} ({:?}, {:?})", info.name, info.backend, info.device_type);
+        println!(
+            "  {} ({:?}, {:?})",
+            info.name, info.backend, info.device_type
+        );
         let limits = adapter.limits();
         println!("    max_texture_size: {}", limits.max_texture_dimension_2d);
         println!("    max_buffer_size: {}", limits.max_buffer_size);
         let features = adapter.features();
-        println!("    compute: {}", features.contains(wgpu::Features::empty()));
-        println!("    timestamp_query: {}", features.contains(wgpu::Features::TIMESTAMP_QUERY));
+        println!(
+            "    compute: {}",
+            features.contains(wgpu::Features::empty())
+        );
+        println!(
+            "    timestamp_query: {}",
+            features.contains(wgpu::Features::TIMESTAMP_QUERY)
+        );
     }
 
     // Try to get the high-performance adapter
@@ -48,12 +57,17 @@ fn main() {
             // Create a test texture to confirm GPU memory works
             let tex = device.create_texture(&wgpu::TextureDescriptor {
                 label: Some("test"),
-                size: wgpu::Extent3d { width: 4096, height: 4096, depth_or_array_layers: 1 },
+                size: wgpu::Extent3d {
+                    width: 4096,
+                    height: 4096,
+                    depth_or_array_layers: 1,
+                },
                 mip_level_count: 1,
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
                 format: wgpu::TextureFormat::Rgba8Unorm,
-                usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT
+                    | wgpu::TextureUsages::TEXTURE_BINDING,
                 view_formats: &[],
             });
             println!("  4096x4096 texture created on GPU");
@@ -74,9 +88,13 @@ fn main() {
                 compilation_options: Default::default(),
                 cache: None,
             });
-            let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            let mut encoder =
+                device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
             {
-                let mut pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, ..Default::default() });
+                let mut pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                    label: None,
+                    ..Default::default()
+                });
                 pass.set_pipeline(&pipeline);
                 pass.dispatch_workgroups(1, 1, 1);
             }

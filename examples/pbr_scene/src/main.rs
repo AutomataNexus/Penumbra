@@ -5,13 +5,13 @@
 //! bloom + SSAO + FXAA + color grading), orbit camera, scene graph hierarchy.
 
 use glam::{Quat, Vec3};
-use penumbra_asset::{cube_mesh, sphere_mesh, plane_mesh};
+use penumbra_asset::{cube_mesh, plane_mesh, sphere_mesh};
 use penumbra_camera::OrbitController;
-use penumbra_core::{Material, Renderer, RendererConfig, Rgba, Rgb};
-use penumbra_pbr::{Light, PbrConfig, PbrPipeline, EnvironmentConfig};
-use penumbra_post::{PostPipeline, ToneMapping, Bloom, Ssao, Fxaa, ColorGrading};
+use penumbra_core::{Material, Renderer, RendererConfig, Rgb, Rgba};
+use penumbra_pbr::{EnvironmentConfig, Light, PbrConfig, PbrPipeline};
+use penumbra_post::{Bloom, ColorGrading, Fxaa, PostPipeline, Ssao, ToneMapping};
 use penumbra_scene::{Scene, Transform};
-use penumbra_shadow::{ShadowConfig, CascadeShadowMap};
+use penumbra_shadow::{CascadeShadowMap, ShadowConfig};
 use penumbra_wgpu::{WgpuBackend, WgpuConfig};
 
 fn main() {
@@ -20,18 +20,23 @@ fn main() {
     // ── Backend + renderer ──
     let backend = WgpuBackend::headless(1920, 1080, WgpuConfig::default())
         .expect("Failed to create wgpu backend");
-    let mut renderer = Renderer::new(backend, RendererConfig {
-        width: 1920,
-        height: 1080,
-        msaa_samples: 4,
-        hdr: true,
-        vsync: true,
-        ..RendererConfig::default()
-    });
+    let mut renderer = Renderer::new(
+        backend,
+        RendererConfig {
+            width: 1920,
+            height: 1080,
+            msaa_samples: 4,
+            hdr: true,
+            vsync: true,
+            ..RendererConfig::default()
+        },
+    );
 
     // ── Create meshes ──
     let gpu_cube = renderer.create_mesh(cube_mesh()).expect("cube mesh");
-    let gpu_sphere = renderer.create_mesh(sphere_mesh(32, 16)).expect("sphere mesh");
+    let gpu_sphere = renderer
+        .create_mesh(sphere_mesh(32, 16))
+        .expect("sphere mesh");
     let gpu_plane = renderer.create_mesh(plane_mesh(8)).expect("plane mesh");
 
     // ── Create PBR materials ──
@@ -82,70 +87,94 @@ fn main() {
 
     // Ground plane
     let ground = scene.add_mesh(gpu_plane.id, mat_ground);
-    scene.set_transform(ground, Transform {
-        translation: Vec3::new(0.0, -1.0, 0.0),
-        scale: Vec3::new(20.0, 1.0, 20.0),
-        ..Transform::default()
-    });
+    scene.set_transform(
+        ground,
+        Transform {
+            translation: Vec3::new(0.0, -1.0, 0.0),
+            scale: Vec3::new(20.0, 1.0, 20.0),
+            ..Transform::default()
+        },
+    );
     scene.set_aabb(ground, gpu_plane.aabb);
 
     // Red metal cube (center)
     let cube1 = scene.add_mesh(gpu_cube.id, mat_red_metal);
-    scene.set_transform(cube1, Transform {
-        translation: Vec3::new(0.0, 0.0, 0.0),
-        rotation: Quat::from_euler(glam::EulerRot::YXZ, 0.6, 0.3, 0.0),
-        scale: Vec3::ONE,
-    });
+    scene.set_transform(
+        cube1,
+        Transform {
+            translation: Vec3::new(0.0, 0.0, 0.0),
+            rotation: Quat::from_euler(glam::EulerRot::YXZ, 0.6, 0.3, 0.0),
+            scale: Vec3::ONE,
+        },
+    );
     scene.set_aabb(cube1, gpu_cube.aabb);
 
     // Gold sphere (right)
     let sphere1 = scene.add_mesh(gpu_sphere.id, mat_gold);
-    scene.set_transform(sphere1, Transform {
-        translation: Vec3::new(2.5, 0.0, 0.0),
-        scale: Vec3::splat(1.5),
-        ..Transform::default()
-    });
+    scene.set_transform(
+        sphere1,
+        Transform {
+            translation: Vec3::new(2.5, 0.0, 0.0),
+            scale: Vec3::splat(1.5),
+            ..Transform::default()
+        },
+    );
     scene.set_aabb(sphere1, gpu_sphere.aabb);
 
     // Blue plastic sphere (left)
     let sphere2 = scene.add_mesh(gpu_sphere.id, mat_blue_plastic);
-    scene.set_transform(sphere2, Transform {
-        translation: Vec3::new(-2.5, 0.0, 0.5),
-        scale: Vec3::ONE,
-        ..Transform::default()
-    });
+    scene.set_transform(
+        sphere2,
+        Transform {
+            translation: Vec3::new(-2.5, 0.0, 0.5),
+            scale: Vec3::ONE,
+            ..Transform::default()
+        },
+    );
     scene.set_aabb(sphere2, gpu_sphere.aabb);
 
     // Small emissive cube (floating)
     let emissive_cube = scene.add_mesh(gpu_cube.id, mat_emissive);
-    scene.set_transform(emissive_cube, Transform {
-        translation: Vec3::new(-1.0, 2.0, -1.5),
-        rotation: Quat::from_euler(glam::EulerRot::YXZ, 0.8, 0.5, 0.2),
-        scale: Vec3::splat(0.5),
-    });
+    scene.set_transform(
+        emissive_cube,
+        Transform {
+            translation: Vec3::new(-1.0, 2.0, -1.5),
+            rotation: Quat::from_euler(glam::EulerRot::YXZ, 0.8, 0.5, 0.2),
+            scale: Vec3::splat(0.5),
+        },
+    );
     scene.set_aabb(emissive_cube, gpu_cube.aabb);
 
     // Parent group with two children (demonstrates hierarchy)
     let group = scene.add_empty();
-    scene.set_transform(group, Transform {
-        translation: Vec3::new(0.0, 0.0, -3.0),
-        rotation: Quat::from_rotation_y(0.3),
-        ..Transform::default()
-    });
+    scene.set_transform(
+        group,
+        Transform {
+            translation: Vec3::new(0.0, 0.0, -3.0),
+            rotation: Quat::from_rotation_y(0.3),
+            ..Transform::default()
+        },
+    );
     let child1 = scene.add_mesh(gpu_cube.id, mat_blue_plastic);
     scene.set_parent(child1, group);
-    scene.set_transform(child1, Transform {
-        translation: Vec3::new(-1.0, 0.5, 0.0),
-        scale: Vec3::splat(0.4),
-        ..Transform::default()
-    });
+    scene.set_transform(
+        child1,
+        Transform {
+            translation: Vec3::new(-1.0, 0.5, 0.0),
+            scale: Vec3::splat(0.4),
+            ..Transform::default()
+        },
+    );
     let child2 = scene.add_mesh(gpu_sphere.id, mat_red_metal);
     scene.set_parent(child2, group);
-    scene.set_transform(child2, Transform {
-        translation: Vec3::new(1.0, 0.5, 0.0),
-        scale: Vec3::splat(0.4),
-        ..Transform::default()
-    });
+    scene.set_transform(
+        child2,
+        Transform {
+            translation: Vec3::new(1.0, 0.5, 0.0),
+            scale: Vec3::splat(0.4),
+            ..Transform::default()
+        },
+    );
 
     // ── PBR lighting ──
     let mut pbr = PbrPipeline::new(PbrConfig {
@@ -260,7 +289,10 @@ fn main() {
     renderer.end_frame(frame).expect("end_frame");
 
     let stats = renderer.stats();
-    println!("Frame complete — draw calls: {}, FPS: {:.0}", stats.draw_calls, stats.fps);
+    println!(
+        "Frame complete — draw calls: {}, FPS: {:.0}",
+        stats.draw_calls, stats.fps
+    );
 
     // Clean up
     renderer.destroy_mesh(gpu_cube.id);

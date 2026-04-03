@@ -45,7 +45,11 @@ fn main() {
 
     let color_target = device.create_texture(&wgpu::TextureDescriptor {
         label: Some("color_target"),
-        size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
+        size: wgpu::Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        },
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
@@ -57,7 +61,11 @@ fn main() {
 
     let depth_target = device.create_texture(&wgpu::TextureDescriptor {
         label: Some("depth_target"),
-        size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
+        size: wgpu::Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        },
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
@@ -291,7 +299,12 @@ fn render_frame(ctx: &GpuCtx, instance_count: u32) {
                 view: color_view,
                 resolve_target: None,
                 ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color { r: 0.1, g: 0.1, b: 0.15, a: 1.0 }),
+                    load: wgpu::LoadOp::Clear(wgpu::Color {
+                        r: 0.1,
+                        g: 0.1,
+                        b: 0.15,
+                        a: 1.0,
+                    }),
                     store: wgpu::StoreOp::Store,
                 },
             })],
@@ -337,7 +350,17 @@ fn print_stats(label: &str, times: &[Duration]) {
     let p99 = sorted[(sorted.len() as f64 * 0.99) as usize];
     let avg: f64 = sorted.iter().sum::<f64>() / sorted.len() as f64;
     let fps = 1000.0 / median;
-    let triangles = if label.contains("27K") { 27_225 * 12 } else if label.contains("10K") { 10_000 * 12 } else if label.contains("50K") { 50_000 * 12 } else if label.contains("1K") { 1_000 * 12 } else { 0 };
+    let triangles = if label.contains("27K") {
+        27_225 * 12
+    } else if label.contains("10K") {
+        10_000 * 12
+    } else if label.contains("50K") {
+        50_000 * 12
+    } else if label.contains("1K") {
+        1_000 * 12
+    } else {
+        0
+    };
 
     println!("  {}", label);
     println!("    min:    {:.3} ms", min);
@@ -347,7 +370,11 @@ fn print_stats(label: &str, times: &[Duration]) {
     println!("    max:    {:.3} ms", max);
     println!("    fps:    {:.0} (at median)", fps);
     if triangles > 0 {
-        println!("    triangles: {} ({:.1}M)", triangles, triangles as f64 / 1_000_000.0);
+        println!(
+            "    triangles: {} ({:.1}M)",
+            triangles,
+            triangles as f64 / 1_000_000.0
+        );
     }
     let pass = if median < 8.0 { "PASS" } else { "FAIL" };
     println!("    < 8ms target: {}", pass);

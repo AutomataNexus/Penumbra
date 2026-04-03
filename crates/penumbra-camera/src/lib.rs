@@ -16,7 +16,7 @@ pub use camera::{Camera, OrthographicCamera, PerspectiveCamera};
 pub use fly::FlyController;
 pub use globe::GlobeController;
 pub use orbit::OrbitController;
-pub use ray::{screen_to_ray, Ray};
+pub use ray::{Ray, screen_to_ray};
 
 #[cfg(test)]
 mod tests {
@@ -37,7 +37,10 @@ mod tests {
         let view = cam.view_matrix();
         // Transforming the camera position by the view matrix should yield the origin.
         let transformed = view.transform_point3(cam.position);
-        assert!(transformed.length() < 1e-5, "camera position should map to origin in view space");
+        assert!(
+            transformed.length() < 1e-5,
+            "camera position should map to origin in view space"
+        );
     }
 
     #[test]

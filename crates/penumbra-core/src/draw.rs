@@ -1,6 +1,6 @@
-use glam::Mat4;
-use penumbra_backend::{MeshId, PipelineId, BindGroupId};
 use crate::material::MaterialId;
+use glam::Mat4;
+use penumbra_backend::{BindGroupId, MeshId, PipelineId};
 
 /// A single draw call to be submitted to the GPU.
 #[derive(Debug, Clone)]

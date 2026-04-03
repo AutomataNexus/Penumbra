@@ -68,13 +68,28 @@ enum Commands {
 }
 
 const CRATE_REGISTRY: &[(&str, &str)] = &[
-    ("core", "Renderer, RenderFrame, Material, DrawCall, math re-exports"),
+    (
+        "core",
+        "Renderer, RenderFrame, Material, DrawCall, math re-exports",
+    ),
     ("backend", "RenderBackend trait — GPU abstraction layer"),
-    ("wgpu", "Default wgpu backend (Vulkan/Metal/DX12/WebGPU/WebGL2)"),
-    ("scene", "Scene graph, transform hierarchy, frustum culling, LOD"),
+    (
+        "wgpu",
+        "Default wgpu backend (Vulkan/Metal/DX12/WebGPU/WebGL2)",
+    ),
+    (
+        "scene",
+        "Scene graph, transform hierarchy, frustum culling, LOD",
+    ),
     ("pbr", "PBR pipeline, Cook-Torrance BRDF, lights, IBL"),
-    ("instance", "GPU instanced rendering, 27K+ entities at 60fps"),
-    ("terrain", "Tile streaming, terrain mesh, LRU cache, Terrain-RGB"),
+    (
+        "instance",
+        "GPU instanced rendering, 27K+ entities at 60fps",
+    ),
+    (
+        "terrain",
+        "Tile streaming, terrain mesh, LRU cache, Terrain-RGB",
+    ),
     ("atmosphere", "Bruneton-Neyret scattering, fog, sun/moon"),
     ("post", "Tone mapping, bloom, SSAO, FXAA, color grading"),
     ("shadow", "Cascaded shadow maps, PCF, point light cubemaps"),
@@ -82,7 +97,10 @@ const CRATE_REGISTRY: &[(&str, &str)] = &[
     ("compute", "Compute shader abstraction, GPU frustum culling"),
     ("geo", "WGS84 geodesy, ECEF/ENU, haversine, tile math"),
     ("immediate", "Per-frame draw API: lines, shapes, billboards"),
-    ("camera", "Perspective, orthographic, orbit, fly, globe controllers"),
+    (
+        "camera",
+        "Perspective, orthographic, orbit, fly, globe controllers",
+    ),
     ("asset", "glTF 2.0, OBJ, PNG/JPEG, primitive generators"),
     ("winit", "winit window integration, input handling"),
     ("web", "WASM target, browser surface, fetch tile loading"),
@@ -90,10 +108,22 @@ const CRATE_REGISTRY: &[(&str, &str)] = &[
 
 const EXAMPLES: &[(&str, &str)] = &[
     ("hello_cube", "PBR-lit cube with orbit camera and 3 lights"),
-    ("pbr_scene", "Multiple PBR materials, shadows, post-processing"),
-    ("instanced_entities", "27K instanced entities with frustum culling"),
-    ("globe", "Full globe with satellite tiles, terrain, atmosphere"),
-    ("tactical_globe", "NexusPulse Tactical demo: 27K entities + globe + HUD"),
+    (
+        "pbr_scene",
+        "Multiple PBR materials, shadows, post-processing",
+    ),
+    (
+        "instanced_entities",
+        "27K instanced entities with frustum culling",
+    ),
+    (
+        "globe",
+        "Full globe with satellite tiles, terrain, atmosphere",
+    ),
+    (
+        "tactical_globe",
+        "NexusPulse Tactical demo: 27K entities + globe + HUD",
+    ),
     ("wasm", "Browser WASM example (build with wasm-pack)"),
 ];
 
@@ -115,9 +145,7 @@ fn init_project(name: &str, geo: bool, full: bool) {
     println!("Initializing Penumbra project: {}", name);
 
     // Create project with cargo
-    let status = Command::new("cargo")
-        .args(["init", name])
-        .status();
+    let status = Command::new("cargo").args(["init", name]).status();
 
     match status {
         Ok(s) if s.success() => println!("  Created Rust project: {}", name),
@@ -170,11 +198,19 @@ fn init_project(name: &str, geo: bool, full: bool) {
 
     let dep_block: String = deps
         .iter()
-        .map(|d| format!("{} = {{ git = \"https://github.com/AutomataNexus/Penumbra.git\" }}", d))
+        .map(|d| {
+            format!(
+                "{} = {{ git = \"https://github.com/AutomataNexus/Penumbra.git\" }}",
+                d
+            )
+        })
         .collect::<Vec<_>>()
         .join("\n");
 
-    cargo_content.push_str(&format!("\n# Penumbra 3D Rendering SDK\n{}\nglam = \"0.29\"\n", dep_block));
+    cargo_content.push_str(&format!(
+        "\n# Penumbra 3D Rendering SDK\n{}\nglam = \"0.29\"\n",
+        dep_block
+    ));
     fs::write(&cargo_path, cargo_content).expect("Failed to write Cargo.toml");
     println!("  Added {} Penumbra crates to Cargo.toml", deps.len());
 
@@ -247,18 +283,23 @@ fn add_crates(crates: &[String], all: bool) {
         CRATE_REGISTRY.iter().map(|(name, _)| *name).collect()
     } else {
         if crates.is_empty() {
-            eprintln!("Error: no crate names provided. Use `penumbra add scene pbr` or `penumbra add --all`.");
+            eprintln!(
+                "Error: no crate names provided. Use `penumbra add scene pbr` or `penumbra add --all`."
+            );
             std::process::exit(1);
         }
-        crates.iter().map(|s| {
-            let name = s.strip_prefix("penumbra-").unwrap_or(s);
-            if CRATE_REGISTRY.iter().any(|(n, _)| *n == name) {
-                name
-            } else {
-                eprintln!("Error: unknown crate '{}'. Run `penumbra list`.", s);
-                std::process::exit(1);
-            }
-        }).collect()
+        crates
+            .iter()
+            .map(|s| {
+                let name = s.strip_prefix("penumbra-").unwrap_or(s);
+                if CRATE_REGISTRY.iter().any(|(n, _)| *n == name) {
+                    name
+                } else {
+                    eprintln!("Error: unknown crate '{}'. Run `penumbra list`.", s);
+                    std::process::exit(1);
+                }
+            })
+            .collect()
     };
 
     let mut cargo = fs::read_to_string("Cargo.toml").expect("Failed to read Cargo.toml");
@@ -306,7 +347,14 @@ fn show_info() {
 
     // wgpu adapter info (via gpu_probe if available)
     println!("  GPU:  Run `cargo run --bin gpu_probe --release` for adapter details");
-    println!("  WASM: {}", if cfg!(target_arch = "wasm32") { "yes" } else { "no (native)" });
+    println!(
+        "  WASM: {}",
+        if cfg!(target_arch = "wasm32") {
+            "yes"
+        } else {
+            "no (native)"
+        }
+    );
 
     // Check if wasm-pack is installed
     let wasm_pack = Command::new("wasm-pack").arg("--version").output();
@@ -365,7 +413,11 @@ fn run_bench(name: Option<&str>) {
         Some(bench_name) => {
             let valid = ["instancing", "tile_streaming", "full_scene"];
             if !valid.contains(&bench_name) {
-                eprintln!("Error: unknown benchmark '{}'. Available: {}, gpu", bench_name, valid.join(", "));
+                eprintln!(
+                    "Error: unknown benchmark '{}'. Available: {}, gpu",
+                    bench_name,
+                    valid.join(", ")
+                );
                 std::process::exit(1);
             }
             println!("Running benchmark: {}", bench_name);
@@ -395,9 +447,15 @@ fn open_docs() {
     println!("Opening Penumbra docs: {}", url);
 
     #[cfg(target_os = "linux")]
-    { let _ = Command::new("xdg-open").arg(url).spawn(); }
+    {
+        let _ = Command::new("xdg-open").arg(url).spawn();
+    }
     #[cfg(target_os = "macos")]
-    { let _ = Command::new("open").arg(url).spawn(); }
+    {
+        let _ = Command::new("open").arg(url).spawn();
+    }
     #[cfg(target_os = "windows")]
-    { let _ = Command::new("cmd").args(["/c", "start", url]).spawn(); }
+    {
+        let _ = Command::new("cmd").args(["/c", "start", url]).spawn();
+    }
 }

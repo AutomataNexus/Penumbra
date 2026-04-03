@@ -57,12 +57,7 @@ impl RenderFrame {
             height,
             time,
             delta,
-            camera: CameraUniforms::from_matrices(
-                Mat4::IDENTITY,
-                Mat4::IDENTITY,
-                0.1,
-                1000.0,
-            ),
+            camera: CameraUniforms::from_matrices(Mat4::IDENTITY, Mat4::IDENTITY, 0.1, 1000.0),
             draws: Vec::with_capacity(1024),
         }
     }
@@ -95,9 +90,9 @@ impl RenderFrame {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::material::MaterialId;
     use glam::Vec3;
     use penumbra_backend::{MeshId, PipelineId};
-    use crate::material::MaterialId;
 
     #[test]
     fn frame_collects_draws() {
@@ -115,11 +110,7 @@ mod tests {
 
     #[test]
     fn camera_uniforms_position() {
-        let view = Mat4::look_at_rh(
-            Vec3::new(0.0, 5.0, 10.0),
-            Vec3::ZERO,
-            Vec3::Y,
-        );
+        let view = Mat4::look_at_rh(Vec3::new(0.0, 5.0, 10.0), Vec3::ZERO, Vec3::Y);
         let proj = Mat4::perspective_rh(60_f32.to_radians(), 16.0 / 9.0, 0.1, 1000.0);
         let uniforms = CameraUniforms::from_matrices(view, proj, 0.1, 1000.0);
         let pos = Vec3::from_array(uniforms.camera_position);

@@ -114,8 +114,7 @@ impl ImmediateRenderer {
         for ring in 0..3 {
             let mut points = Vec::with_capacity(segments + 1);
             for i in 0..=segments {
-                let angle =
-                    2.0 * std::f32::consts::PI * i as f32 / segments as f32;
+                let angle = 2.0 * std::f32::consts::PI * i as f32 / segments as f32;
                 let (s, c) = angle.sin_cos();
                 let p = match ring {
                     0 => center + Vec3::new(c * radius, s * radius, 0.0), // XY
@@ -135,11 +134,7 @@ impl ImmediateRenderer {
         let len = (end - start).length();
         let head_len = len * 0.15;
         // Create two perpendicular vectors for the arrowhead
-        let up = if dir.y.abs() < 0.99 {
-            Vec3::Y
-        } else {
-            Vec3::X
-        };
+        let up = if dir.y.abs() < 0.99 { Vec3::Y } else { Vec3::X };
         let right = dir.cross(up).normalize_or_zero() * head_len * 0.5;
         let head_base = end - dir * head_len;
         self.draw_line(end, head_base + right, color);
@@ -198,9 +193,14 @@ impl ImmediateRenderer {
             },
         ];
         self.batch.triangle_vertices.extend_from_slice(&corners);
-        self.batch
-            .triangle_indices
-            .extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
+        self.batch.triangle_indices.extend_from_slice(&[
+            base,
+            base + 1,
+            base + 2,
+            base,
+            base + 2,
+            base + 3,
+        ]);
     }
 }
 

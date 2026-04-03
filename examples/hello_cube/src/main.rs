@@ -7,7 +7,7 @@
 use glam::{Quat, Vec3};
 use penumbra_asset::cube_mesh;
 use penumbra_camera::OrbitController;
-use penumbra_core::{Material, Renderer, RendererConfig, Rgba, Rgb};
+use penumbra_core::{Material, Renderer, RendererConfig, Rgb, Rgba};
 use penumbra_pbr::{Light, PbrConfig, PbrPipeline};
 use penumbra_scene::{Scene, Transform};
 use penumbra_wgpu::{WgpuBackend, WgpuConfig};
@@ -19,14 +19,17 @@ fn main() {
     // Create headless wgpu backend (swap for window-based in a real app)
     let backend = WgpuBackend::headless(1280, 720, WgpuConfig::default())
         .expect("Failed to create wgpu backend");
-    let mut renderer = Renderer::new(backend, RendererConfig {
-        width: 1280,
-        height: 720,
-        msaa_samples: 4,
-        hdr: true,
-        vsync: true,
-        ..RendererConfig::default()
-    });
+    let mut renderer = Renderer::new(
+        backend,
+        RendererConfig {
+            width: 1280,
+            height: 720,
+            msaa_samples: 4,
+            hdr: true,
+            vsync: true,
+            ..RendererConfig::default()
+        },
+    );
 
     // ── Create the cube mesh on the GPU ──
     let cube_desc = cube_mesh();
@@ -145,7 +148,10 @@ fn main() {
     renderer.end_frame(frame).expect("end_frame");
 
     let stats = renderer.stats();
-    println!("Frame complete — draw calls: {}, FPS: {:.0}", stats.draw_calls, stats.fps);
+    println!(
+        "Frame complete — draw calls: {}, FPS: {:.0}",
+        stats.draw_calls, stats.fps
+    );
 
     // Clean up
     renderer.destroy_mesh(gpu_mesh.id);

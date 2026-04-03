@@ -57,7 +57,12 @@ impl ComputeScheduler {
             for (i, &bg) in task.bind_groups.iter().enumerate() {
                 backend.set_compute_bind_group(handle, i as u32, bg);
             }
-            backend.dispatch(handle, task.workgroups[0], task.workgroups[1], task.workgroups[2]);
+            backend.dispatch(
+                handle,
+                task.workgroups[0],
+                task.workgroups[1],
+                task.workgroups[2],
+            );
         }
         backend.end_compute_pass(handle);
         self.tasks.clear();

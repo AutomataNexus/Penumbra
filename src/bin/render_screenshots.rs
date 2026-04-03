@@ -60,7 +60,8 @@ fn save_texture_to_png(
         mapped_at_creation: false,
     });
 
-    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+    let mut encoder =
+        device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
     encoder.copy_texture_to_buffer(
         wgpu::TexelCopyTextureInfo {
             texture,
@@ -76,13 +77,19 @@ fn save_texture_to_png(
                 rows_per_image: Some(height),
             },
         },
-        wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
+        wgpu::Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        },
     );
     queue.submit(std::iter::once(encoder.finish()));
 
     let slice = staging.slice(..);
     let (tx, rx) = std::sync::mpsc::channel();
-    slice.map_async(wgpu::MapMode::Read, move |r| { tx.send(r).ok(); });
+    slice.map_async(wgpu::MapMode::Read, move |r| {
+        tx.send(r).ok();
+    });
     device.poll(wgpu::Maintain::Wait);
     rx.recv().unwrap().unwrap();
 
@@ -102,10 +109,23 @@ fn save_texture_to_png(
     println!("  Saved: {} ({}x{})", filename, width, height);
 }
 
-fn create_render_targets(device: &wgpu::Device, width: u32, height: u32) -> (wgpu::Texture, wgpu::TextureView, wgpu::Texture, wgpu::TextureView) {
+fn create_render_targets(
+    device: &wgpu::Device,
+    width: u32,
+    height: u32,
+) -> (
+    wgpu::Texture,
+    wgpu::TextureView,
+    wgpu::Texture,
+    wgpu::TextureView,
+) {
     let color = device.create_texture(&wgpu::TextureDescriptor {
         label: Some("color"),
-        size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
+        size: wgpu::Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        },
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
@@ -116,7 +136,11 @@ fn create_render_targets(device: &wgpu::Device, width: u32, height: u32) -> (wgp
     let color_view = color.create_view(&wgpu::TextureViewDescriptor::default());
     let depth = device.create_texture(&wgpu::TextureDescriptor {
         label: Some("depth"),
-        size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
+        size: wgpu::Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        },
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
@@ -128,7 +152,11 @@ fn create_render_targets(device: &wgpu::Device, width: u32, height: u32) -> (wgp
     (color, color_view, depth, depth_view)
 }
 
-fn create_pipeline(device: &wgpu::Device, shader_src: &str, bind_group_layout: &wgpu::BindGroupLayout) -> wgpu::RenderPipeline {
+fn create_pipeline(
+    device: &wgpu::Device,
+    shader_src: &str,
+    bind_group_layout: &wgpu::BindGroupLayout,
+) -> wgpu::RenderPipeline {
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: Some("shader"),
         source: wgpu::ShaderSource::Wgsl(shader_src.into()),
@@ -224,26 +252,42 @@ struct VOut { @builtin(position) pos: vec4<f32>, @location(0) color: vec3<f32>, 
 }
 "#;
 
-    let view = glam::Mat4::look_at_rh(glam::Vec3::new(1.5, 1.2, 2.0), glam::Vec3::ZERO, glam::Vec3::Y);
+    let view = glam::Mat4::look_at_rh(
+        glam::Vec3::new(1.5, 1.2, 2.0),
+        glam::Vec3::ZERO,
+        glam::Vec3::Y,
+    );
     let proj = glam::Mat4::perspective_rh(60_f32.to_radians(), w as f32 / h as f32, 0.1, 100.0);
     let mvp = proj * view;
 
     let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
         label: None,
         entries: &[wgpu::BindGroupLayoutEntry {
-            binding: 0, visibility: wgpu::ShaderStages::VERTEX,
-            ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None },
+            binding: 0,
+            visibility: wgpu::ShaderStages::VERTEX,
+            ty: wgpu::BindingType::Buffer {
+                ty: wgpu::BufferBindingType::Uniform,
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
             count: None,
         }],
     });
     let pipeline = create_pipeline(device, shader_src, &bgl);
     let ubuf = device.create_buffer(&wgpu::BufferDescriptor {
-        label: None, size: 64, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false,
+        label: None,
+        size: 64,
+        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
     });
     queue.write_buffer(&ubuf, 0, bytemuck::bytes_of(&mvp.to_cols_array()));
     let bg = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: None, layout: &bgl,
-        entries: &[wgpu::BindGroupEntry { binding: 0, resource: ubuf.as_entire_binding() }],
+        label: None,
+        layout: &bgl,
+        entries: &[wgpu::BindGroupEntry {
+            binding: 0,
+            resource: ubuf.as_entire_binding(),
+        }],
     });
 
     let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
@@ -251,11 +295,25 @@ struct VOut { @builtin(position) pos: vec4<f32>, @location(0) color: vec3<f32>, 
         let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: None,
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &color_view, resolve_target: None,
-                ops: wgpu::Operations { load: wgpu::LoadOp::Clear(wgpu::Color { r: 0.95, g: 0.95, b: 0.97, a: 1.0 }), store: wgpu::StoreOp::Store },
+                view: &color_view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color {
+                        r: 0.95,
+                        g: 0.95,
+                        b: 0.97,
+                        a: 1.0,
+                    }),
+                    store: wgpu::StoreOp::Store,
+                },
             })],
             depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                view: &depth_view, depth_ops: Some(wgpu::Operations { load: wgpu::LoadOp::Clear(1.0), store: wgpu::StoreOp::Store }), stencil_ops: None,
+                view: &depth_view,
+                depth_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(1.0),
+                    store: wgpu::StoreOp::Store,
+                }),
+                stencil_ops: None,
             }),
             ..Default::default()
         });
@@ -326,26 +384,42 @@ struct VOut { @builtin(position) pos: vec4<f32>, @location(0) color: vec3<f32>, 
 }
 "#;
 
-    let view = glam::Mat4::look_at_rh(glam::Vec3::new(3.0, 2.5, 4.0), glam::Vec3::new(0.0, 0.2, 0.0), glam::Vec3::Y);
+    let view = glam::Mat4::look_at_rh(
+        glam::Vec3::new(3.0, 2.5, 4.0),
+        glam::Vec3::new(0.0, 0.2, 0.0),
+        glam::Vec3::Y,
+    );
     let proj = glam::Mat4::perspective_rh(55_f32.to_radians(), w as f32 / h as f32, 0.1, 100.0);
     let mvp = proj * view;
 
     let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
         label: None,
         entries: &[wgpu::BindGroupLayoutEntry {
-            binding: 0, visibility: wgpu::ShaderStages::VERTEX,
-            ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None },
+            binding: 0,
+            visibility: wgpu::ShaderStages::VERTEX,
+            ty: wgpu::BindingType::Buffer {
+                ty: wgpu::BufferBindingType::Uniform,
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
             count: None,
         }],
     });
     let pipeline = create_pipeline(device, shader_src, &bgl);
     let ubuf = device.create_buffer(&wgpu::BufferDescriptor {
-        label: None, size: 64, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false,
+        label: None,
+        size: 64,
+        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
     });
     queue.write_buffer(&ubuf, 0, bytemuck::bytes_of(&mvp.to_cols_array()));
     let bg = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: None, layout: &bgl,
-        entries: &[wgpu::BindGroupEntry { binding: 0, resource: ubuf.as_entire_binding() }],
+        label: None,
+        layout: &bgl,
+        entries: &[wgpu::BindGroupEntry {
+            binding: 0,
+            resource: ubuf.as_entire_binding(),
+        }],
     });
 
     let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
@@ -353,11 +427,25 @@ struct VOut { @builtin(position) pos: vec4<f32>, @location(0) color: vec3<f32>, 
         let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: None,
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &color_view, resolve_target: None,
-                ops: wgpu::Operations { load: wgpu::LoadOp::Clear(wgpu::Color { r: 0.93, g: 0.93, b: 0.95, a: 1.0 }), store: wgpu::StoreOp::Store },
+                view: &color_view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color {
+                        r: 0.93,
+                        g: 0.93,
+                        b: 0.95,
+                        a: 1.0,
+                    }),
+                    store: wgpu::StoreOp::Store,
+                },
             })],
             depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                view: &depth_view, depth_ops: Some(wgpu::Operations { load: wgpu::LoadOp::Clear(1.0), store: wgpu::StoreOp::Store }), stencil_ops: None,
+                view: &depth_view,
+                depth_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(1.0),
+                    store: wgpu::StoreOp::Store,
+                }),
+                stencil_ops: None,
             }),
             ..Default::default()
         });
@@ -419,26 +507,42 @@ struct VOut { @builtin(position) pos: vec4<f32>, @location(0) color: vec4<f32> }
 @fragment fn fs_main(in: VOut) -> @location(0) vec4<f32> { return in.color; }
 "#;
 
-    let view = glam::Mat4::look_at_rh(glam::Vec3::new(0.0, 120.0, 200.0), glam::Vec3::ZERO, glam::Vec3::Y);
+    let view = glam::Mat4::look_at_rh(
+        glam::Vec3::new(0.0, 120.0, 200.0),
+        glam::Vec3::ZERO,
+        glam::Vec3::Y,
+    );
     let proj = glam::Mat4::perspective_rh(60_f32.to_radians(), w as f32 / h as f32, 0.1, 1000.0);
     let mvp = proj * view;
 
     let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
         label: None,
         entries: &[wgpu::BindGroupLayoutEntry {
-            binding: 0, visibility: wgpu::ShaderStages::VERTEX,
-            ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None },
+            binding: 0,
+            visibility: wgpu::ShaderStages::VERTEX,
+            ty: wgpu::BindingType::Buffer {
+                ty: wgpu::BufferBindingType::Uniform,
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
             count: None,
         }],
     });
     let pipeline = create_pipeline(device, shader_src, &bgl);
     let ubuf = device.create_buffer(&wgpu::BufferDescriptor {
-        label: None, size: 64, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false,
+        label: None,
+        size: 64,
+        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
     });
     queue.write_buffer(&ubuf, 0, bytemuck::bytes_of(&mvp.to_cols_array()));
     let bg = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: None, layout: &bgl,
-        entries: &[wgpu::BindGroupEntry { binding: 0, resource: ubuf.as_entire_binding() }],
+        label: None,
+        layout: &bgl,
+        entries: &[wgpu::BindGroupEntry {
+            binding: 0,
+            resource: ubuf.as_entire_binding(),
+        }],
     });
 
     let start = Instant::now();
@@ -447,11 +551,25 @@ struct VOut { @builtin(position) pos: vec4<f32>, @location(0) color: vec4<f32> }
         let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: None,
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &color_view, resolve_target: None,
-                ops: wgpu::Operations { load: wgpu::LoadOp::Clear(wgpu::Color { r: 0.08, g: 0.08, b: 0.12, a: 1.0 }), store: wgpu::StoreOp::Store },
+                view: &color_view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color {
+                        r: 0.08,
+                        g: 0.08,
+                        b: 0.12,
+                        a: 1.0,
+                    }),
+                    store: wgpu::StoreOp::Store,
+                },
             })],
             depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                view: &depth_view, depth_ops: Some(wgpu::Operations { load: wgpu::LoadOp::Clear(1.0), store: wgpu::StoreOp::Store }), stencil_ops: None,
+                view: &depth_view,
+                depth_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(1.0),
+                    store: wgpu::StoreOp::Store,
+                }),
+                stencil_ops: None,
             }),
             ..Default::default()
         });
@@ -461,7 +579,10 @@ struct VOut { @builtin(position) pos: vec4<f32>, @location(0) color: vec4<f32> }
     }
     queue.submit(std::iter::once(enc.finish()));
     device.poll(wgpu::Maintain::Wait);
-    println!("  27K instances rendered in {:.2}ms", start.elapsed().as_secs_f64() * 1000.0);
+    println!(
+        "  27K instances rendered in {:.2}ms",
+        start.elapsed().as_secs_f64() * 1000.0
+    );
     save_texture_to_png(device, queue, &color_tex, w, h, filename);
 }
 
@@ -517,26 +638,42 @@ struct VOut { @builtin(position) pos: vec4<f32>, @location(0) color: vec3<f32> }
 }
 "#;
 
-    let view = glam::Mat4::look_at_rh(glam::Vec3::new(8.0, 10.0, 12.0), glam::Vec3::new(0.0, 0.0, 0.0), glam::Vec3::Y);
+    let view = glam::Mat4::look_at_rh(
+        glam::Vec3::new(8.0, 10.0, 12.0),
+        glam::Vec3::new(0.0, 0.0, 0.0),
+        glam::Vec3::Y,
+    );
     let proj = glam::Mat4::perspective_rh(60_f32.to_radians(), w as f32 / h as f32, 0.1, 200.0);
     let mvp = proj * view;
 
     let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
         label: None,
         entries: &[wgpu::BindGroupLayoutEntry {
-            binding: 0, visibility: wgpu::ShaderStages::VERTEX,
-            ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None },
+            binding: 0,
+            visibility: wgpu::ShaderStages::VERTEX,
+            ty: wgpu::BindingType::Buffer {
+                ty: wgpu::BufferBindingType::Uniform,
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
             count: None,
         }],
     });
     let pipeline = create_pipeline(device, shader_src, &bgl);
     let ubuf = device.create_buffer(&wgpu::BufferDescriptor {
-        label: None, size: 64, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false,
+        label: None,
+        size: 64,
+        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
     });
     queue.write_buffer(&ubuf, 0, bytemuck::bytes_of(&mvp.to_cols_array()));
     let bg = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: None, layout: &bgl,
-        entries: &[wgpu::BindGroupEntry { binding: 0, resource: ubuf.as_entire_binding() }],
+        label: None,
+        layout: &bgl,
+        entries: &[wgpu::BindGroupEntry {
+            binding: 0,
+            resource: ubuf.as_entire_binding(),
+        }],
     });
 
     let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
@@ -544,11 +681,25 @@ struct VOut { @builtin(position) pos: vec4<f32>, @location(0) color: vec3<f32> }
         let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: None,
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &color_view, resolve_target: None,
-                ops: wgpu::Operations { load: wgpu::LoadOp::Clear(wgpu::Color { r: 0.55, g: 0.7, b: 0.9, a: 1.0 }), store: wgpu::StoreOp::Store },
+                view: &color_view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color {
+                        r: 0.55,
+                        g: 0.7,
+                        b: 0.9,
+                        a: 1.0,
+                    }),
+                    store: wgpu::StoreOp::Store,
+                },
             })],
             depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                view: &depth_view, depth_ops: Some(wgpu::Operations { load: wgpu::LoadOp::Clear(1.0), store: wgpu::StoreOp::Store }), stencil_ops: None,
+                view: &depth_view,
+                depth_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(1.0),
+                    store: wgpu::StoreOp::Store,
+                }),
+                stencil_ops: None,
             }),
             ..Default::default()
         });

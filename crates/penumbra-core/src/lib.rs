@@ -1,24 +1,21 @@
 //! penumbra-core — Core types, Renderer, and RenderFrame for the Penumbra 3D rendering SDK.
 
-mod renderer;
+mod draw;
 mod frame;
 mod material;
-mod draw;
+mod renderer;
 
-pub use renderer::{Renderer, RendererConfig, FrameStats};
-pub use frame::{RenderFrame, CameraUniforms};
-pub use material::{Material, MaterialId, AlphaMode};
 pub use draw::DrawCall;
+pub use frame::{CameraUniforms, RenderFrame};
+pub use material::{AlphaMode, Material, MaterialId};
+pub use renderer::{FrameStats, Renderer, RendererConfig};
 
 // Re-export math types from glam
-pub use glam::{
-    DVec3, Mat3, Mat4, Quat, Vec2, Vec3, Vec4,
-};
+pub use glam::{DVec3, Mat3, Mat4, Quat, Vec2, Vec3, Vec4};
 
 // Re-export backend types that consumers need
 pub use penumbra_backend::{
-    Aabb, BackendError, GpuBuffer, GpuMesh, GpuTexture, MeshId, TextureId, BufferId,
-    PipelineId, BindGroupId, Rgba, Rgb, RenderBackend, BackendCapabilities,
-    MeshDescriptor, TextureDescriptor, BufferDescriptor, TextureFormat, TextureUsage,
-    BufferUsage, Vertex,
+    Aabb, BackendCapabilities, BackendError, BindGroupId, BufferDescriptor, BufferId, BufferUsage,
+    GpuBuffer, GpuMesh, GpuTexture, MeshDescriptor, MeshId, PipelineId, RenderBackend, Rgb, Rgba,
+    TextureDescriptor, TextureFormat, TextureId, TextureUsage, Vertex,
 };

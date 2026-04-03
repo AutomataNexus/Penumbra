@@ -8,14 +8,16 @@ use glam::Vec3;
 use penumbra_atmosphere::{AtmosphereConfig, AtmosphereRenderer, Fog, FogMode};
 use penumbra_camera::OrbitController;
 use penumbra_core::{Renderer, RendererConfig};
-use penumbra_geo::{GeoPosition, wgs84_to_ecef, wgs84_to_enu, haversine_distance, lat_lon_to_tile, tile_bounds, tile_resolution};
+use penumbra_geo::{
+    GeoPosition, haversine_distance, lat_lon_to_tile, tile_bounds, tile_resolution, wgs84_to_ecef,
+    wgs84_to_enu,
+};
 use penumbra_pbr::{Light, PbrConfig, PbrPipeline};
-use penumbra_post::{PostPipeline, ToneMapping, Fxaa, ColorGrading};
+use penumbra_post::{ColorGrading, Fxaa, PostPipeline, ToneMapping};
 use penumbra_scene::Scene;
 use penumbra_terrain::{
-    TileCoord, TileCache, TileData, TerrainData, TerrainConfig,
-    XyzTileSource, TileFormat, TileSource,
-    decode_terrain_rgb, generate_tile_mesh,
+    TerrainConfig, TerrainData, TileCache, TileCoord, TileData, TileFormat, TileSource,
+    XyzTileSource, decode_terrain_rgb, generate_tile_mesh,
 };
 use penumbra_wgpu::{WgpuBackend, WgpuConfig};
 
@@ -25,28 +27,45 @@ fn main() {
     // ── Backend + renderer ──
     let backend = WgpuBackend::headless(1920, 1080, WgpuConfig::default())
         .expect("Failed to create wgpu backend");
-    let mut renderer = Renderer::new(backend, RendererConfig {
-        width: 1920,
-        height: 1080,
-        hdr: true,
-        ..RendererConfig::default()
-    });
+    let mut renderer = Renderer::new(
+        backend,
+        RendererConfig {
+            width: 1920,
+            height: 1080,
+            hdr: true,
+            ..RendererConfig::default()
+        },
+    );
 
     println!("Penumbra globe — full globe with satellite tiles + terrain + atmosphere");
     println!("Backend: {}", renderer.backend_name());
 
     // ── Geodesy demo ──
-    let nyc = GeoPosition { lat: 40.7128, lon: -74.0060, alt: 0.0 };
-    let london = GeoPosition { lat: 51.5074, lon: -0.1278, alt: 0.0 };
+    let nyc = GeoPosition {
+        lat: 40.7128,
+        lon: -74.0060,
+        alt: 0.0,
+    };
+    let london = GeoPosition {
+        lat: 51.5074,
+        lon: -0.1278,
+        alt: 0.0,
+    };
 
     let ecef_nyc = wgs84_to_ecef(&nyc);
-    println!("NYC ECEF: ({:.0}, {:.0}, {:.0})", ecef_nyc.x, ecef_nyc.y, ecef_nyc.z);
+    println!(
+        "NYC ECEF: ({:.0}, {:.0}, {:.0})",
+        ecef_nyc.x, ecef_nyc.y, ecef_nyc.z
+    );
 
     let dist = haversine_distance(&nyc, &london);
     println!("NYC -> London: {:.0} km", dist / 1000.0);
 
     let local_london = wgs84_to_enu(&london, &nyc);
-    println!("London in NYC-ENU: ({:.0}, {:.0}, {:.0})", local_london.x, local_london.y, local_london.z);
+    println!(
+        "London in NYC-ENU: ({:.0}, {:.0}, {:.0})",
+        local_london.x, local_london.y, local_london.z
+    );
 
     // ── Tile math ──
     let zoom = 10_u8;
@@ -54,8 +73,10 @@ fn main() {
     println!("NYC tile at zoom {}: ({}, {})", zoom, tile.x, tile.y);
 
     let bounds = tile_bounds(tile);
-    println!("Tile bounds: lat [{:.4}, {:.4}] lon [{:.4}, {:.4}]",
-        bounds.min_lat, bounds.max_lat, bounds.min_lon, bounds.max_lon);
+    println!(
+        "Tile bounds: lat [{:.4}, {:.4}] lon [{:.4}, {:.4}]",
+        bounds.min_lat, bounds.max_lat, bounds.min_lon, bounds.max_lon
+    );
 
     let res = tile_resolution(zoom, nyc.lat);
     println!("Tile resolution at zoom {}: {:.2} m/pixel", zoom, res);
@@ -70,8 +91,14 @@ fn main() {
         TileFormat::TerrainRgb,
     );
 
-    println!("Imagery URL: {}", imagery_source.tile_url(TileCoord::new(tile.x as u32, tile.y as u32, zoom as u32)));
-    println!("Terrain URL: {}", terrain_source.tile_url(TileCoord::new(tile.x as u32, tile.y as u32, zoom as u32)));
+    println!(
+        "Imagery URL: {}",
+        imagery_source.tile_url(TileCoord::new(tile.x as u32, tile.y as u32, zoom as u32))
+    );
+    println!(
+        "Terrain URL: {}",
+        terrain_source.tile_url(TileCoord::new(tile.x as u32, tile.y as u32, zoom as u32))
+    );
 
     // ── Tile cache + terrain mesh generation ──
     let mut cache = TileCache::new(256);
@@ -83,13 +110,22 @@ fn main() {
         for dy in 0..4_u32 {
             let coord = TileCoord::new(tile.x as u32 + dx, tile.y as u32 + dy, zoom as u32);
             let heights = vec![0.0_f32; verts as usize];
-            cache.insert(coord, TileData::Terrain(TerrainData {
-                heights: heights.clone(),
-                width: resolution + 1,
-                height: resolution + 1,
-            }));
+            cache.insert(
+                coord,
+                TileData::Terrain(TerrainData {
+                    heights: heights.clone(),
+                    width: resolution + 1,
+                    height: resolution + 1,
+                }),
+            );
 
-            let mesh = generate_tile_mesh(coord, &heights, resolution, 1.0, terrain_config.height_scale);
+            let mesh = generate_tile_mesh(
+                coord,
+                &heights,
+                resolution,
+                1.0,
+                terrain_config.height_scale,
+            );
             let gpu_mesh = renderer.create_mesh(mesh.descriptor).expect("terrain mesh");
             renderer.destroy_mesh(gpu_mesh.id);
         }
@@ -116,8 +152,11 @@ fn main() {
         start: 100.0,
         end: 50000.0,
     };
-    println!("Fog: exponential, density={}, factor at 10km = {:.3}",
-        fog.density, fog.fog_factor(10000.0));
+    println!(
+        "Fog: exponential, density={}, factor at 10km = {:.3}",
+        fog.density,
+        fog.fog_factor(10000.0)
+    );
 
     // ── Scene ──
     let scene = Scene::new();
@@ -151,7 +190,12 @@ fn main() {
 
     // ── Render ──
     let mut frame = renderer.begin_frame().expect("begin_frame");
-    frame.set_camera(camera.view_matrix(), camera.projection_matrix(), camera.near, camera.far);
+    frame.set_camera(
+        camera.view_matrix(),
+        camera.projection_matrix(),
+        camera.near,
+        camera.far,
+    );
     renderer.end_frame(frame).expect("end_frame");
 
     println!("Post passes: {}", post.pass_count());

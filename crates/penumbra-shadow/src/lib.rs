@@ -61,14 +61,7 @@ impl CascadeShadowMap {
     }
 
     /// Update cascade splits and matrices for a directional light.
-    pub fn update(
-        &mut self,
-        light_dir: Vec3,
-        near: f32,
-        far: f32,
-        _view: Mat4,
-        _projection: Mat4,
-    ) {
+    pub fn update(&mut self, light_dir: Vec3, near: f32, far: f32, _view: Mat4, _projection: Mat4) {
         let n = self.config.cascades as usize;
         // Compute cascade splits using practical split scheme (logarithmic)
         let lambda = 0.5_f32;
@@ -85,20 +78,19 @@ impl CascadeShadowMap {
         let light_dir_norm = light_dir.normalize_or_zero();
 
         for i in 0..n {
-            let cascade_near = if i == 0 { near } else { self.cascade_splits[i - 1] };
+            let cascade_near = if i == 0 {
+                near
+            } else {
+                self.cascade_splits[i - 1]
+            };
             let cascade_far = self.cascade_splits[i];
 
             // Simple orthographic projection for the cascade
             let center = Vec3::ZERO;
             let extent = cascade_far - cascade_near;
-            let light_view = Mat4::look_at_rh(
-                center - light_dir_norm * extent,
-                center,
-                Vec3::Y,
-            );
-            let light_proj = Mat4::orthographic_rh(
-                -extent, extent, -extent, extent, 0.0, extent * 2.0,
-            );
+            let light_view = Mat4::look_at_rh(center - light_dir_norm * extent, center, Vec3::Y);
+            let light_proj =
+                Mat4::orthographic_rh(-extent, extent, -extent, extent, 0.0, extent * 2.0);
             self.light_space_matrices[i] = light_proj * light_view;
         }
     }
@@ -123,18 +115,13 @@ impl PointShadowMap {
 
     /// Return the 6 view-projection matrices for a cubemap shadow from a point light.
     pub fn face_view_projections(&self, light_pos: Vec3) -> [Mat4; 6] {
-        let proj = Mat4::perspective_rh(
-            std::f32::consts::FRAC_PI_2,
-            1.0,
-            self.near,
-            self.far,
-        );
+        let proj = Mat4::perspective_rh(std::f32::consts::FRAC_PI_2, 1.0, self.near, self.far);
         let faces = [
-            (Vec3::X, Vec3::NEG_Y),   // +X
+            (Vec3::X, Vec3::NEG_Y),     // +X
             (Vec3::NEG_X, Vec3::NEG_Y), // -X
-            (Vec3::Y, Vec3::Z),        // +Y
+            (Vec3::Y, Vec3::Z),         // +Y
             (Vec3::NEG_Y, Vec3::NEG_Z), // -Y
-            (Vec3::Z, Vec3::NEG_Y),    // +Z
+            (Vec3::Z, Vec3::NEG_Y),     // +Z
             (Vec3::NEG_Z, Vec3::NEG_Y), // -Z
         ];
         let mut result = [Mat4::IDENTITY; 6];

@@ -8,9 +8,7 @@ use glam::{Mat4, Vec3};
 use penumbra_asset::sphere_mesh;
 use penumbra_camera::OrbitController;
 use penumbra_core::{Renderer, RendererConfig};
-use penumbra_instance::{
-    cpu_frustum_cull, InstanceBatchDesc, InstanceData, InstanceManager,
-};
+use penumbra_instance::{InstanceBatchDesc, InstanceData, InstanceManager, cpu_frustum_cull};
 use penumbra_pbr::{Light, PbrConfig, PbrPipeline};
 use penumbra_wgpu::{WgpuBackend, WgpuConfig};
 
@@ -22,12 +20,15 @@ fn main() {
     // ── Backend + renderer ──
     let backend = WgpuBackend::headless(1920, 1080, WgpuConfig::default())
         .expect("Failed to create wgpu backend");
-    let mut renderer = Renderer::new(backend, RendererConfig {
-        width: 1920,
-        height: 1080,
-        hdr: true,
-        ..RendererConfig::default()
-    });
+    let mut renderer = Renderer::new(
+        backend,
+        RendererConfig {
+            width: 1920,
+            height: 1080,
+            hdr: true,
+            ..RendererConfig::default()
+        },
+    );
 
     // ── Mesh for instancing ──
     let gpu_sphere = renderer
@@ -76,8 +77,7 @@ fn main() {
         let y = 5.0 + (i as f32 * 0.37).sin() * 3.0; // altitude variation
 
         let mut transform = [0.0_f32; 16];
-        let mat = Mat4::from_translation(Vec3::new(x, y, z))
-            * Mat4::from_scale(Vec3::splat(0.3));
+        let mat = Mat4::from_translation(Vec3::new(x, y, z)) * Mat4::from_scale(Vec3::splat(0.3));
         transform.copy_from_slice(&mat.to_cols_array());
 
         // Color: hostile=red, friendly=blue, unknown=yellow
@@ -105,8 +105,7 @@ fn main() {
         let y = 0.0;
 
         let mut transform = [0.0_f32; 16];
-        let mat = Mat4::from_translation(Vec3::new(x, y, z))
-            * Mat4::from_scale(Vec3::splat(0.15));
+        let mat = Mat4::from_translation(Vec3::new(x, y, z)) * Mat4::from_scale(Vec3::splat(0.15));
         transform.copy_from_slice(&mat.to_cols_array());
 
         let color = match i % 4 {
@@ -158,10 +157,20 @@ fn main() {
     let visible_ground = cpu_frustum_cull(&ground_instances, vp);
     let total_visible = visible_aircraft.len() + visible_ground.len();
 
-    println!("Visible aircraft: {} / {}", visible_aircraft.len(), aircraft_instances.len());
-    println!("Visible ground: {} / {}", visible_ground.len(), ground_instances.len());
-    println!("Total visible: {} / {} ({:.1}%)",
-        total_visible, total_instances,
+    println!(
+        "Visible aircraft: {} / {}",
+        visible_aircraft.len(),
+        aircraft_instances.len()
+    );
+    println!(
+        "Visible ground: {} / {}",
+        visible_ground.len(),
+        ground_instances.len()
+    );
+    println!(
+        "Total visible: {} / {} ({:.1}%)",
+        total_visible,
+        total_instances,
         (total_visible as f64 / total_instances as f64) * 100.0
     );
 
@@ -188,10 +197,16 @@ fn main() {
     renderer.end_frame(frame).expect("end_frame");
 
     let stats = renderer.stats();
-    println!("Frame complete — draw calls: {}, FPS: {:.0}", stats.draw_calls, stats.fps);
+    println!(
+        "Frame complete — draw calls: {}, FPS: {:.0}",
+        stats.draw_calls, stats.fps
+    );
 
     // Clean up
     renderer.destroy_mesh(gpu_sphere.id);
 
-    println!("instanced_entities done — {} entities rendered.", total_instances);
+    println!(
+        "instanced_entities done — {} entities rendered.",
+        total_instances
+    );
 }

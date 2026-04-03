@@ -130,10 +130,13 @@ impl GlobeController {
         } else {
             // Offset camera backward based on tilt
             let forward = Vec3::new(
-                -lon_rad.sin() * heading_rad.cos() + lat_rad.sin() * lon_rad.cos() * heading_rad.sin(),
+                -lon_rad.sin() * heading_rad.cos()
+                    + lat_rad.sin() * lon_rad.cos() * heading_rad.sin(),
                 -lat_rad.cos() * heading_rad.sin(),
-                lon_rad.cos() * heading_rad.cos() + lat_rad.sin() * lon_rad.sin() * heading_rad.sin(),
-            ).normalize();
+                lon_rad.cos() * heading_rad.cos()
+                    + lat_rad.sin() * lon_rad.sin() * heading_rad.sin(),
+            )
+            .normalize();
             let offset = forward * tilt_rad.sin() * alt;
             surface.normalize() * camera_distance + offset
         };
@@ -205,7 +208,10 @@ mod tests {
         let vp = cam.view_projection();
         for col in 0..4 {
             for row in 0..4 {
-                assert!(vp.col(col)[row].is_finite(), "VP matrix has non-finite value");
+                assert!(
+                    vp.col(col)[row].is_finite(),
+                    "VP matrix has non-finite value"
+                );
             }
         }
     }

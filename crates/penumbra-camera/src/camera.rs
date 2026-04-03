@@ -67,7 +67,14 @@ impl OrthographicCamera {
     }
 
     pub fn projection_matrix(&self) -> Mat4 {
-        Mat4::orthographic_rh(self.left, self.right, self.bottom, self.top, self.near, self.far)
+        Mat4::orthographic_rh(
+            self.left,
+            self.right,
+            self.bottom,
+            self.top,
+            self.near,
+            self.far,
+        )
     }
 
     pub fn view_projection(&self) -> Mat4 {

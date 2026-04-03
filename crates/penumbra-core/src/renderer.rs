@@ -4,7 +4,7 @@ use tracing::info;
 
 use penumbra_backend::{
     BackendCapabilities, BackendError, BufferDescriptor, GpuBuffer, GpuMesh, GpuTexture,
-    MeshDescriptor, MeshId, RenderBackend, TextureDescriptor, TextureId, TextureFormat,
+    MeshDescriptor, MeshId, RenderBackend, TextureDescriptor, TextureFormat, TextureId,
 };
 
 use crate::frame::RenderFrame;
@@ -89,15 +89,17 @@ impl Renderer {
 
         self.backend.begin_frame()?;
 
-        Ok(RenderFrame::new(self.config.width, self.config.height, time, delta))
+        Ok(RenderFrame::new(
+            self.config.width,
+            self.config.height,
+            time,
+            delta,
+        ))
     }
 
     pub fn end_frame(&mut self, frame: RenderFrame) -> Result<(), BackendError> {
         let now = Instant::now();
-        let frame_time_ms = now
-            .duration_since(self.last_frame_time)
-            .as_secs_f32()
-            * 1000.0;
+        let frame_time_ms = now.duration_since(self.last_frame_time).as_secs_f32() * 1000.0;
 
         self.frame_stats.frame_time_ms = frame_time_ms;
         self.frame_stats.fps = if frame_time_ms > 0.0 {

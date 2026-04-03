@@ -86,7 +86,10 @@ pub fn create_surface(config: &WebConfig) -> Result<BrowserSurface, WebError> {
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
-        tracing::info!(canvas_id = config.canvas_id, "Browser surface created (non-WASM stub)");
+        tracing::info!(
+            canvas_id = config.canvas_id,
+            "Browser surface created (non-WASM stub)"
+        );
         Ok(BrowserSurface {
             canvas_id: config.canvas_id.clone(),
             width: 0,
@@ -123,7 +126,9 @@ pub fn fetch_tile(request: &TileFetchRequest) -> Result<TileFetchResult, WebErro
         // WASM async fetch would go through wasm_bindgen_futures::spawn_local
         // For synchronous API compatibility, return NotInBrowser and use fetch_tile_async instead
         let _ = request;
-        Err(WebError::FetchFailed("Use fetch_tile_async for WASM".to_string()))
+        Err(WebError::FetchFailed(
+            "Use fetch_tile_async for WASM".to_string(),
+        ))
     }
     #[cfg(not(target_arch = "wasm32"))]
     {

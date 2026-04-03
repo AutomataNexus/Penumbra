@@ -2,10 +2,8 @@
 
 use std::path::Path;
 
-use penumbra_backend::{
-    MeshDescriptor, TextureDescriptor, TextureFormat, TextureUsage, Vertex,
-};
-use penumbra_core::{Material, MaterialId, Rgba, Rgb, AlphaMode};
+use penumbra_backend::{MeshDescriptor, TextureDescriptor, TextureFormat, TextureUsage, Vertex};
+use penumbra_core::{AlphaMode, Material, MaterialId, Rgb, Rgba};
 use thiserror::Error;
 
 // ── Errors ──
@@ -218,10 +216,8 @@ pub fn parse_obj(text: &str) -> Result<LoadedMesh, AssetError> {
             }
             "f" if parts.len() >= 4 => {
                 // Triangulate face (fan triangulation)
-                let face_verts: Vec<(usize, usize, usize)> = parts[1..]
-                    .iter()
-                    .map(|s| parse_face_vertex(s))
-                    .collect();
+                let face_verts: Vec<(usize, usize, usize)> =
+                    parts[1..].iter().map(|s| parse_face_vertex(s)).collect();
                 for i in 1..face_verts.len() - 1 {
                     for &fi in &[0, i, i + 1] {
                         let key = face_verts[fi];
@@ -274,9 +270,18 @@ pub fn parse_obj(text: &str) -> Result<LoadedMesh, AssetError> {
 
 fn parse_face_vertex(s: &str) -> (usize, usize, usize) {
     let parts: Vec<&str> = s.split('/').collect();
-    let pos = parts.first().and_then(|p| p.parse::<usize>().ok()).unwrap_or(0);
-    let uv = parts.get(1).and_then(|p| p.parse::<usize>().ok()).unwrap_or(0);
-    let norm = parts.get(2).and_then(|p| p.parse::<usize>().ok()).unwrap_or(0);
+    let pos = parts
+        .first()
+        .and_then(|p| p.parse::<usize>().ok())
+        .unwrap_or(0);
+    let uv = parts
+        .get(1)
+        .and_then(|p| p.parse::<usize>().ok())
+        .unwrap_or(0);
+    let norm = parts
+        .get(2)
+        .and_then(|p| p.parse::<usize>().ok())
+        .unwrap_or(0);
     (pos, uv, norm)
 }
 
@@ -293,37 +298,67 @@ pub fn cube_mesh() -> MeshDescriptor {
         // +Z face
         (
             [0.0, 0.0, 1.0],
-            [[-0.5, -0.5, 0.5], [0.5, -0.5, 0.5], [0.5, 0.5, 0.5], [-0.5, 0.5, 0.5]],
+            [
+                [-0.5, -0.5, 0.5],
+                [0.5, -0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [-0.5, 0.5, 0.5],
+            ],
             [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
         ),
         // -Z face
         (
             [0.0, 0.0, -1.0],
-            [[0.5, -0.5, -0.5], [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5]],
+            [
+                [0.5, -0.5, -0.5],
+                [-0.5, -0.5, -0.5],
+                [-0.5, 0.5, -0.5],
+                [0.5, 0.5, -0.5],
+            ],
             [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
         ),
         // +X face
         (
             [1.0, 0.0, 0.0],
-            [[0.5, -0.5, 0.5], [0.5, -0.5, -0.5], [0.5, 0.5, -0.5], [0.5, 0.5, 0.5]],
+            [
+                [0.5, -0.5, 0.5],
+                [0.5, -0.5, -0.5],
+                [0.5, 0.5, -0.5],
+                [0.5, 0.5, 0.5],
+            ],
             [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
         ),
         // -X face
         (
             [-1.0, 0.0, 0.0],
-            [[-0.5, -0.5, -0.5], [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [-0.5, 0.5, -0.5]],
+            [
+                [-0.5, -0.5, -0.5],
+                [-0.5, -0.5, 0.5],
+                [-0.5, 0.5, 0.5],
+                [-0.5, 0.5, -0.5],
+            ],
             [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
         ),
         // +Y face
         (
             [0.0, 1.0, 0.0],
-            [[-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, 0.5, -0.5], [-0.5, 0.5, -0.5]],
+            [
+                [-0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, -0.5],
+                [-0.5, 0.5, -0.5],
+            ],
             [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
         ),
         // -Y face
         (
             [0.0, -1.0, 0.0],
-            [[-0.5, -0.5, -0.5], [0.5, -0.5, -0.5], [0.5, -0.5, 0.5], [-0.5, -0.5, 0.5]],
+            [
+                [-0.5, -0.5, -0.5],
+                [0.5, -0.5, -0.5],
+                [0.5, -0.5, 0.5],
+                [-0.5, -0.5, 0.5],
+            ],
             [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
         ),
     ];
@@ -407,7 +442,10 @@ pub fn plane_mesh(subdivisions: u32) -> MeshDescriptor {
             vertices.push(Vertex {
                 position: [fx, 0.0, fz],
                 normal: [0.0, 1.0, 0.0],
-                uv: [x as f32 / subdivisions as f32, z as f32 / subdivisions as f32],
+                uv: [
+                    x as f32 / subdivisions as f32,
+                    z as f32 / subdivisions as f32,
+                ],
                 tangent: [1.0, 0.0, 0.0, 1.0],
             });
         }

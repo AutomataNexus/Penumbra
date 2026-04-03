@@ -46,11 +46,7 @@ pub fn great_circle_interpolate(from: &GeoPosition, to: &GeoPosition, t: f64) ->
 
     if d.abs() < 1e-12 {
         // Points are coincident
-        return GeoPosition::new(
-            from.lat,
-            from.lon,
-            from.alt + t * (to.alt - from.alt),
-        );
+        return GeoPosition::new(from.lat, from.lon, from.alt + t * (to.alt - from.alt));
     }
 
     let sin_d = d.sin();

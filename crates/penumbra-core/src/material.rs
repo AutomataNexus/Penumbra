@@ -1,4 +1,4 @@
-use penumbra_backend::{Rgba, Rgb, TextureId};
+use penumbra_backend::{Rgb, Rgba, TextureId};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -13,7 +13,9 @@ impl MaterialId {
 pub enum AlphaMode {
     #[default]
     Opaque,
-    Mask { cutoff: f32 },
+    Mask {
+        cutoff: f32,
+    },
     Blend,
 }
 

@@ -94,7 +94,14 @@ mod tests {
     #[test]
     fn tile_at_zoom_0() {
         let tile = lat_lon_to_tile(0.0, 0.0, 0);
-        assert_eq!(tile, TileCoord { x: 0, y: 0, zoom: 0 });
+        assert_eq!(
+            tile,
+            TileCoord {
+                x: 0,
+                y: 0,
+                zoom: 0
+            }
+        );
     }
 
     #[test]
@@ -130,7 +137,11 @@ mod tests {
 
     #[test]
     fn tile_bounds_zoom_0_covers_world() {
-        let bounds = tile_bounds(TileCoord { x: 0, y: 0, zoom: 0 });
+        let bounds = tile_bounds(TileCoord {
+            x: 0,
+            y: 0,
+            zoom: 0,
+        });
         assert!((bounds.min_lon - (-180.0)).abs() < 1e-6);
         assert!((bounds.max_lon - 180.0).abs() < 1e-6);
         // Web Mercator doesn't cover full +-90 but should be close to ~85.05

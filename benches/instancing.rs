@@ -7,7 +7,7 @@
 //!
 //! Run: `cargo bench --bench instancing`
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use glam::Mat4;
 use penumbra_backend::MeshId;
 use penumbra_instance::{InstanceBatchDesc, InstanceData, InstanceManager, cpu_frustum_cull};
@@ -61,7 +61,8 @@ fn bench_batch_update(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::from_parameter(count), &count, |b, _| {
             b.iter(|| {
-                mgr.update_batch(batch_id, black_box(instances.clone())).unwrap();
+                mgr.update_batch(batch_id, black_box(instances.clone()))
+                    .unwrap();
             });
         });
     }

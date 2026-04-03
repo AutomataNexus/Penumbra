@@ -328,10 +328,8 @@ mod tests {
 
     #[test]
     fn url_template() {
-        let source = XyzTileSource::new(
-            "https://tile.example.com/{z}/{x}/{y}.png",
-            TileFormat::Png,
-        );
+        let source =
+            XyzTileSource::new("https://tile.example.com/{z}/{x}/{y}.png", TileFormat::Png);
         let url = source.tile_url(TileCoord::new(3, 5, 10));
         assert_eq!(url, "https://tile.example.com/10/3/5.png");
     }
@@ -349,13 +347,7 @@ mod tests {
         let resolution = 4;
         let verts_per_side = resolution + 1;
         let heights = vec![0.0; (verts_per_side * verts_per_side) as usize];
-        let mesh = generate_tile_mesh(
-            TileCoord::new(0, 0, 0),
-            &heights,
-            resolution,
-            1.0,
-            1.0,
-        );
+        let mesh = generate_tile_mesh(TileCoord::new(0, 0, 0), &heights, resolution, 1.0, 1.0);
         assert_eq!(
             mesh.descriptor.vertices.len(),
             (verts_per_side * verts_per_side) as usize

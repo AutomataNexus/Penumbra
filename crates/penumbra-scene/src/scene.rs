@@ -190,10 +190,7 @@ mod tests {
             parent,
             Transform::from_translation(Vec3::new(10.0, 0.0, 0.0)),
         );
-        scene.set_transform(
-            child,
-            Transform::from_translation(Vec3::new(0.0, 5.0, 0.0)),
-        );
+        scene.set_transform(child, Transform::from_translation(Vec3::new(0.0, 5.0, 0.0)));
         scene.update_transforms();
         let child_world = scene.get_node(child).unwrap().world_transform;
         let pos = child_world.col(3).truncate();
@@ -208,10 +205,7 @@ mod tests {
         for _i in 0..10 {
             let node = scene.add_empty();
             scene.set_parent(node, prev);
-            scene.set_transform(
-                node,
-                Transform::from_translation(Vec3::new(1.0, 0.0, 0.0)),
-            );
+            scene.set_transform(node, Transform::from_translation(Vec3::new(1.0, 0.0, 0.0)));
             prev = node;
         }
         scene.update_transforms();

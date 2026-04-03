@@ -10,15 +10,15 @@
 //!
 //! Run: `cargo bench --bench full_scene`
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use glam::{Mat4, Quat, Vec3};
+use penumbra_backend::MeshId;
 use penumbra_camera::OrbitController;
-use penumbra_instance::{cpu_frustum_cull, InstanceData};
+use penumbra_core::MaterialId;
+use penumbra_instance::{InstanceData, cpu_frustum_cull};
 use penumbra_pbr::{Light, PbrConfig, PbrPipeline};
 use penumbra_scene::{Scene, Transform};
 use penumbra_text::{FontAtlas, FontId, GlyphMetrics, TextBatch, layout_text};
-use penumbra_backend::MeshId;
-use penumbra_core::MaterialId;
 
 fn build_scene(node_count: usize) -> Scene {
     let mut scene = Scene::new();

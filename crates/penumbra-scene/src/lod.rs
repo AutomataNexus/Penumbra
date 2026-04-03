@@ -33,9 +33,18 @@ mod tests {
     #[test]
     fn select_correct_lod() {
         let lod = LodMesh::new(vec![
-            LodLevel { mesh: MeshId(0), max_screen_size: 50.0 },
-            LodLevel { mesh: MeshId(1), max_screen_size: 200.0 },
-            LodLevel { mesh: MeshId(2), max_screen_size: 1000.0 },
+            LodLevel {
+                mesh: MeshId(0),
+                max_screen_size: 50.0,
+            },
+            LodLevel {
+                mesh: MeshId(1),
+                max_screen_size: 200.0,
+            },
+            LodLevel {
+                mesh: MeshId(2),
+                max_screen_size: 1000.0,
+            },
         ]);
 
         assert_eq!(lod.select_level(10.0).unwrap().mesh, MeshId(0));

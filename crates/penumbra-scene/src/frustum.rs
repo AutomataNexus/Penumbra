@@ -59,8 +59,7 @@ impl Frustum {
         for plane in &self.planes {
             let mut all_outside = true;
             for corner in &corners {
-                let dist =
-                    plane.x * corner.x + plane.y * corner.y + plane.z * corner.z + plane.w;
+                let dist = plane.x * corner.x + plane.y * corner.y + plane.z * corner.z + plane.w;
                 if dist >= 0.0 {
                     all_outside = false;
                     break;

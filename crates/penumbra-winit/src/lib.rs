@@ -311,7 +311,10 @@ mod tests {
     #[test]
     fn key_mapping() {
         assert_eq!(map_key(&Key::Character("w".into())), Some(KeyCode::W));
-        assert_eq!(map_key(&Key::Named(NamedKey::Escape)), Some(KeyCode::Escape));
+        assert_eq!(
+            map_key(&Key::Named(NamedKey::Escape)),
+            Some(KeyCode::Escape)
+        );
         assert_eq!(map_key(&Key::Named(NamedKey::ArrowUp)), Some(KeyCode::Up));
         assert_eq!(map_key(&Key::Character("z".into())), None);
     }

@@ -31,10 +31,10 @@ pub enum InstanceError {
 #[derive(Debug, Clone, Copy, Pod, Zeroable)]
 #[repr(C)]
 pub struct InstanceData {
-    pub transform: [f32; 16],  // 64 bytes (mat4)
-    pub color: [f32; 4],       // 16 bytes
-    pub uv_offset: [f32; 2],   // 8 bytes
-    pub uv_scale: [f32; 2],    // 8 bytes
+    pub transform: [f32; 16], // 64 bytes (mat4)
+    pub color: [f32; 4],      // 16 bytes
+    pub uv_offset: [f32; 2],  // 8 bytes
+    pub uv_scale: [f32; 2],   // 8 bytes
 }
 
 // ── Batch ID ──
@@ -146,12 +146,22 @@ pub fn cpu_frustum_cull(instances: &[InstanceData], view_projection: Mat4) -> Ve
     let mut visible = Vec::new();
     for (i, inst) in instances.iter().enumerate() {
         // Extract translation from the transform matrix (column 3)
-        let pos = Vec4::new(inst.transform[12], inst.transform[13], inst.transform[14], 1.0);
+        let pos = Vec4::new(
+            inst.transform[12],
+            inst.transform[13],
+            inst.transform[14],
+            1.0,
+        );
         let clip = view_projection * pos;
 
         // Simple point-in-frustum check (w-clip test)
         let w = clip.w.abs().max(0.001);
-        if clip.x >= -w && clip.x <= w && clip.y >= -w && clip.y <= w && clip.z >= 0.0 && clip.z <= w
+        if clip.x >= -w
+            && clip.x <= w
+            && clip.y >= -w
+            && clip.y <= w
+            && clip.z >= 0.0
+            && clip.z <= w
         {
             visible.push(i as u32);
         }

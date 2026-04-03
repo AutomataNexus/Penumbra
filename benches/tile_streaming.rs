@@ -7,9 +7,9 @@
 //!
 //! Run: `cargo bench --bench tile_streaming`
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use penumbra_terrain::{
-    TileCache, TileCoord, TileData, TerrainData, decode_terrain_rgb, generate_tile_mesh,
+    TerrainData, TileCache, TileCoord, TileData, decode_terrain_rgb, generate_tile_mesh,
 };
 
 fn bench_tile_cache(c: &mut Criterion) {
@@ -85,9 +85,7 @@ fn bench_terrain_mesh_generation(c: &mut Criterion) {
 
     for resolution in [8, 16, 32, 64] {
         let verts = (resolution + 1) * (resolution + 1);
-        let heights: Vec<f32> = (0..verts)
-            .map(|i| (i as f32 * 0.1).sin() * 100.0)
-            .collect();
+        let heights: Vec<f32> = (0..verts).map(|i| (i as f32 * 0.1).sin() * 100.0).collect();
         let coord = TileCoord::new(0, 0, 10);
 
         group.bench_with_input(
@@ -95,7 +93,13 @@ fn bench_terrain_mesh_generation(c: &mut Criterion) {
             &resolution,
             |b, &res| {
                 b.iter(|| {
-                    black_box(generate_tile_mesh(coord, black_box(&heights), res, 1.0, 1.0));
+                    black_box(generate_tile_mesh(
+                        coord,
+                        black_box(&heights),
+                        res,
+                        1.0,
+                        1.0,
+                    ));
                 });
             },
         );

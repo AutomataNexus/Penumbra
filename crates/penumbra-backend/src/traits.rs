@@ -69,12 +69,7 @@ pub trait RenderBackend: MaybeSend + MaybeSync {
     fn set_bind_group(&mut self, handle: RenderPassHandle, index: u32, group: BindGroupId);
     fn set_vertex_buffer(&mut self, handle: RenderPassHandle, slot: u32, buffer: BufferSlice);
     fn set_index_buffer(&mut self, handle: RenderPassHandle, buffer: BufferSlice);
-    fn draw(
-        &mut self,
-        handle: RenderPassHandle,
-        vertices: Range<u32>,
-        instances: Range<u32>,
-    );
+    fn draw(&mut self, handle: RenderPassHandle, vertices: Range<u32>, instances: Range<u32>);
     fn draw_indexed(
         &mut self,
         handle: RenderPassHandle,

@@ -336,9 +336,7 @@ mod tests {
     fn disabled_pass_filtered() {
         let mut fxaa = Fxaa::default();
         fxaa.enabled = false;
-        let pipeline = PostPipeline::new()
-            .add(ToneMapping::aces())
-            .add(fxaa);
+        let pipeline = PostPipeline::new().add(ToneMapping::aces()).add(fxaa);
         assert_eq!(pipeline.pass_count(), 2);
         assert_eq!(pipeline.enabled_passes().len(), 1);
     }

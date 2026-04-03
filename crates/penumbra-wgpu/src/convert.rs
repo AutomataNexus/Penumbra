@@ -29,7 +29,10 @@ pub fn from_wgpu_texture_format(format: wgpu::TextureFormat) -> TextureFormat {
         wgpu::TextureFormat::Depth32Float => TextureFormat::Depth32Float,
         wgpu::TextureFormat::Depth24PlusStencil8 => TextureFormat::Depth24PlusStencil8,
         other => {
-            tracing::warn!("Unsupported wgpu texture format {:?}, falling back to Rgba8Unorm", other);
+            tracing::warn!(
+                "Unsupported wgpu texture format {:?}, falling back to Rgba8Unorm",
+                other
+            );
             TextureFormat::Rgba8Unorm
         }
     }

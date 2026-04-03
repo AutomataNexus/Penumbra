@@ -6,8 +6,8 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use js_sys::Uint8Array;
-use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{
     Document, HtmlCanvasElement, Navigator, Request, RequestInit, RequestMode, Response, Window,
@@ -107,8 +107,8 @@ pub async fn fetch_tile_async(url: &str) -> Result<Vec<u8>, WebError> {
     opts.method("GET");
     opts.mode(RequestMode::Cors);
 
-    let request =
-        Request::new_with_str_and_init(url, &opts).map_err(|e| WebError::FetchFailed(format!("{e:?}")))?;
+    let request = Request::new_with_str_and_init(url, &opts)
+        .map_err(|e| WebError::FetchFailed(format!("{e:?}")))?;
 
     let resp_value = JsFuture::from(window().fetch_with_request(&request))
         .await

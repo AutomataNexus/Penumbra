@@ -1,8 +1,8 @@
 use std::ops::Range;
 use tracing::info;
 
-use penumbra_backend::*;
 use penumbra_backend::traits::{BindGroupEntry, RenderBackend};
+use penumbra_backend::*;
 
 use crate::convert::*;
 use crate::resources::{MeshData, Resources, TextureData, bytes_per_pixel};
@@ -31,11 +31,24 @@ impl Default for WgpuConfig {
 #[allow(dead_code)]
 enum RecordedCommand {
     SetPipeline(PipelineId),
-    SetBindGroup { index: u32, group: BindGroupId },
-    SetVertexBuffer { slot: u32, buffer: BufferSlice },
+    SetBindGroup {
+        index: u32,
+        group: BindGroupId,
+    },
+    SetVertexBuffer {
+        slot: u32,
+        buffer: BufferSlice,
+    },
     SetIndexBuffer(BufferSlice),
-    Draw { vertices: Range<u32>, instances: Range<u32> },
-    DrawIndexed { indices: Range<u32>, base_vertex: i32, instances: Range<u32> },
+    Draw {
+        vertices: Range<u32>,
+        instances: Range<u32>,
+    },
+    DrawIndexed {
+        indices: Range<u32>,
+        base_vertex: i32,
+        instances: Range<u32>,
+    },
 }
 
 struct RecordedRenderPass {
@@ -142,11 +155,8 @@ impl RenderBackend for WgpuBackend {
             usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        self.queue.write_buffer(
-            &vertex_buffer,
-            0,
-            bytemuck::cast_slice(&desc.vertices),
-        );
+        self.queue
+            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&desc.vertices));
 
         let index_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: desc.label.as_deref(),
@@ -223,11 +233,14 @@ impl RenderBackend for WgpuBackend {
         }
 
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-        self.resources.textures.insert(id, TextureData {
-            texture,
-            view,
-            format: desc.format,
-        });
+        self.resources.textures.insert(
+            id,
+            TextureData {
+                texture,
+                view,
+                format: desc.format,
+            },
+        );
 
         Ok(GpuTexture {
             id: TextureId(id),
@@ -306,9 +319,9 @@ impl RenderBackend for WgpuBackend {
                                 view_dimension: wgpu::TextureViewDimension::D2,
                             }
                         }
-                        BindingType::Sampler => wgpu::BindingType::Sampler(
-                            wgpu::SamplerBindingType::Filtering,
-                        ),
+                        BindingType::Sampler => {
+                            wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering)
+                        }
                     },
                     count: None,
                 })
@@ -325,13 +338,13 @@ impl RenderBackend for WgpuBackend {
             bgl_refs.push(bgl);
         }
 
-        let pipeline_layout =
-            self.device
-                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                    label: desc.label.as_deref(),
-                    bind_group_layouts: &bgl_refs,
-                    push_constant_ranges: &[],
-                });
+        let pipeline_layout = self
+            .device
+            .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: desc.label.as_deref(),
+                bind_group_layouts: &bgl_refs,
+                push_constant_ranges: &[],
+            });
 
         let vertex_attributes: Vec<wgpu::VertexAttribute> = desc
             .vertex_layout
@@ -440,16 +453,16 @@ impl RenderBackend for WgpuBackend {
                 source: wgpu::ShaderSource::Wgsl(src.into()),
             });
 
-        let pipeline =
-            self.device
-                .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-                    label: desc.label.as_deref(),
-                    layout: None,
-                    module: &module,
-                    entry_point: Some(&desc.entry_point),
-                    compilation_options: Default::default(),
-                    cache: None,
-                });
+        let pipeline = self
+            .device
+            .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: desc.label.as_deref(),
+                layout: None,
+                module: &module,
+                entry_point: Some(&desc.entry_point),
+                compilation_options: Default::default(),
+                cache: None,
+            });
 
         self.resources.compute_pipelines.insert(id, pipeline);
         Ok(ComputePipelineId(id))
@@ -476,7 +489,9 @@ impl RenderBackend for WgpuBackend {
                         min_binding_size: None,
                     },
                     BindingType::StorageBuffer { read_only } => wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: *read_only },
+                        ty: wgpu::BufferBindingType::Storage {
+                            read_only: *read_only,
+                        },
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
@@ -490,16 +505,20 @@ impl RenderBackend for WgpuBackend {
                         format: to_wgpu_texture_format(*format),
                         view_dimension: wgpu::TextureViewDimension::D2,
                     },
-                    BindingType::Sampler => wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                    BindingType::Sampler => {
+                        wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering)
+                    }
                 },
                 count: None,
             })
             .collect();
 
-        let layout = self.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: layout_desc.label.as_deref(),
-            entries: &layout_entries,
-        });
+        let layout = self
+            .device
+            .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: layout_desc.label.as_deref(),
+                entries: &layout_entries,
+            });
 
         // Ensure default sampler exists before building entries
         let default_sampler_id = 0_u64;
@@ -518,34 +537,40 @@ impl RenderBackend for WgpuBackend {
         let wgpu_entries: Vec<wgpu::BindGroupEntry<'_>> = entries
             .iter()
             .filter_map(|entry| match entry {
-                BindGroupEntry::Buffer { binding, buffer, offset, size } => {
-                    self.resources.buffers.get(&buffer.0).map(|buf| {
-                        wgpu::BindGroupEntry {
-                            binding: *binding,
-                            resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
-                                buffer: buf,
-                                offset: *offset,
-                                size: std::num::NonZeroU64::new(*size),
-                            }),
-                        }
-                    })
-                }
-                BindGroupEntry::Texture { binding, texture } => {
-                    self.resources.textures.get(&texture.0).map(|td| &td.view).map(|view| {
-                        wgpu::BindGroupEntry {
-                            binding: *binding,
-                            resource: wgpu::BindingResource::TextureView(view),
-                        }
-                    })
-                }
-                BindGroupEntry::Sampler { binding } => {
-                    self.resources.samplers.get(&default_sampler_id).map(|sampler| {
-                        wgpu::BindGroupEntry {
-                            binding: *binding,
-                            resource: wgpu::BindingResource::Sampler(sampler),
-                        }
-                    })
-                }
+                BindGroupEntry::Buffer {
+                    binding,
+                    buffer,
+                    offset,
+                    size,
+                } => self
+                    .resources
+                    .buffers
+                    .get(&buffer.0)
+                    .map(|buf| wgpu::BindGroupEntry {
+                        binding: *binding,
+                        resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
+                            buffer: buf,
+                            offset: *offset,
+                            size: std::num::NonZeroU64::new(*size),
+                        }),
+                    }),
+                BindGroupEntry::Texture { binding, texture } => self
+                    .resources
+                    .textures
+                    .get(&texture.0)
+                    .map(|td| &td.view)
+                    .map(|view| wgpu::BindGroupEntry {
+                        binding: *binding,
+                        resource: wgpu::BindingResource::TextureView(view),
+                    }),
+                BindGroupEntry::Sampler { binding } => self
+                    .resources
+                    .samplers
+                    .get(&default_sampler_id)
+                    .map(|sampler| wgpu::BindGroupEntry {
+                        binding: *binding,
+                        resource: wgpu::BindingResource::Sampler(sampler),
+                    }),
             })
             .collect();
 
@@ -591,9 +616,11 @@ impl RenderBackend for WgpuBackend {
             mapped_at_creation: false,
         });
 
-        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("read_buffer_copy"),
-        });
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("read_buffer_copy"),
+            });
         encoder.copy_buffer_to_buffer(src_buffer, offset, &staging, 0, len);
         self.queue.submit(std::iter::once(encoder.finish()));
 
@@ -675,28 +702,44 @@ impl RenderBackend for WgpuBackend {
     }
 
     fn end_render_pass(&mut self, handle: RenderPassHandle) {
-        let pass_data = match self.render_passes.get_mut(handle.0 as usize).and_then(|p| p.take()) {
+        let pass_data = match self
+            .render_passes
+            .get_mut(handle.0 as usize)
+            .and_then(|p| p.take())
+        {
             Some(d) => d,
             None => return,
         };
 
-        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: pass_data.descriptor.label.as_deref(),
-        });
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: pass_data.descriptor.label.as_deref(),
+            });
 
         // Resolve color attachments to wgpu texture views
         let color_views: Vec<Option<&wgpu::TextureView>> = pass_data
             .descriptor
             .color_attachments
             .iter()
-            .map(|att| self.resources.textures.get(&att.texture.0).map(|td| &td.view))
+            .map(|att| {
+                self.resources
+                    .textures
+                    .get(&att.texture.0)
+                    .map(|td| &td.view)
+            })
             .collect();
 
         let depth_view: Option<&wgpu::TextureView> = pass_data
             .descriptor
             .depth_attachment
             .as_ref()
-            .and_then(|att| self.resources.textures.get(&att.texture.0).map(|td| &td.view));
+            .and_then(|att| {
+                self.resources
+                    .textures
+                    .get(&att.texture.0)
+                    .map(|td| &td.view)
+            });
 
         // Build wgpu color attachments
         let wgpu_color_attachments: Vec<Option<wgpu::RenderPassColorAttachment<'_>>> = pass_data
@@ -727,22 +770,27 @@ impl RenderBackend for WgpuBackend {
             })
             .collect();
 
-        let wgpu_depth_attachment = pass_data.descriptor.depth_attachment.as_ref().and_then(|att| {
-            depth_view.map(|v| wgpu::RenderPassDepthStencilAttachment {
-                view: v,
-                depth_ops: Some(wgpu::Operations {
-                    load: match att.depth_load_op {
-                        LoadOp::Clear(c) => wgpu::LoadOp::Clear(c.r as f32),
-                        LoadOp::Load => wgpu::LoadOp::Load,
-                    },
-                    store: match att.depth_store_op {
-                        StoreOp::Store => wgpu::StoreOp::Store,
-                        StoreOp::Discard => wgpu::StoreOp::Discard,
-                    },
-                }),
-                stencil_ops: None,
-            })
-        });
+        let wgpu_depth_attachment =
+            pass_data
+                .descriptor
+                .depth_attachment
+                .as_ref()
+                .and_then(|att| {
+                    depth_view.map(|v| wgpu::RenderPassDepthStencilAttachment {
+                        view: v,
+                        depth_ops: Some(wgpu::Operations {
+                            load: match att.depth_load_op {
+                                LoadOp::Clear(c) => wgpu::LoadOp::Clear(c.r as f32),
+                                LoadOp::Load => wgpu::LoadOp::Load,
+                            },
+                            store: match att.depth_store_op {
+                                StoreOp::Store => wgpu::StoreOp::Store,
+                                StoreOp::Discard => wgpu::StoreOp::Discard,
+                            },
+                        }),
+                        stencil_ops: None,
+                    })
+                });
 
         // Create the actual wgpu render pass and replay commands
         {
@@ -781,10 +829,17 @@ impl RenderBackend for WgpuBackend {
                             );
                         }
                     }
-                    RecordedCommand::Draw { vertices, instances } => {
+                    RecordedCommand::Draw {
+                        vertices,
+                        instances,
+                    } => {
                         rpass.draw(vertices.clone(), instances.clone());
                     }
-                    RecordedCommand::DrawIndexed { indices, base_vertex, instances } => {
+                    RecordedCommand::DrawIndexed {
+                        indices,
+                        base_vertex,
+                        instances,
+                    } => {
                         rpass.draw_indexed(indices.clone(), *base_vertex, instances.clone());
                     }
                 }
@@ -802,13 +857,15 @@ impl RenderBackend for WgpuBackend {
 
     fn set_bind_group(&mut self, handle: RenderPassHandle, index: u32, group: BindGroupId) {
         if let Some(Some(pass)) = self.render_passes.get_mut(handle.0 as usize) {
-            pass.commands.push(RecordedCommand::SetBindGroup { index, group });
+            pass.commands
+                .push(RecordedCommand::SetBindGroup { index, group });
         }
     }
 
     fn set_vertex_buffer(&mut self, handle: RenderPassHandle, slot: u32, buffer: BufferSlice) {
         if let Some(Some(pass)) = self.render_passes.get_mut(handle.0 as usize) {
-            pass.commands.push(RecordedCommand::SetVertexBuffer { slot, buffer });
+            pass.commands
+                .push(RecordedCommand::SetVertexBuffer { slot, buffer });
         }
     }
 
@@ -820,7 +877,10 @@ impl RenderBackend for WgpuBackend {
 
     fn draw(&mut self, handle: RenderPassHandle, vertices: Range<u32>, instances: Range<u32>) {
         if let Some(Some(pass)) = self.render_passes.get_mut(handle.0 as usize) {
-            pass.commands.push(RecordedCommand::Draw { vertices, instances });
+            pass.commands.push(RecordedCommand::Draw {
+                vertices,
+                instances,
+            });
         }
     }
 
@@ -849,14 +909,20 @@ impl RenderBackend for WgpuBackend {
     }
 
     fn end_compute_pass(&mut self, handle: ComputePassHandle) {
-        let pass_data = match self.compute_passes.get_mut(handle.0 as usize).and_then(|p| p.take()) {
+        let pass_data = match self
+            .compute_passes
+            .get_mut(handle.0 as usize)
+            .and_then(|p| p.take())
+        {
             Some(d) => d,
             None => return,
         };
 
-        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("compute"),
-        });
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("compute"),
+            });
 
         {
             let mut cpass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
@@ -888,19 +954,27 @@ impl RenderBackend for WgpuBackend {
 
     fn set_compute_pipeline(&mut self, handle: ComputePassHandle, pipeline: ComputePipelineId) {
         if let Some(Some(pass)) = self.compute_passes.get_mut(handle.0 as usize) {
-            pass.commands.push(RecordedComputeCommand::SetPipeline(pipeline));
+            pass.commands
+                .push(RecordedComputeCommand::SetPipeline(pipeline));
         }
     }
 
-    fn set_compute_bind_group(&mut self, handle: ComputePassHandle, index: u32, group: BindGroupId) {
+    fn set_compute_bind_group(
+        &mut self,
+        handle: ComputePassHandle,
+        index: u32,
+        group: BindGroupId,
+    ) {
         if let Some(Some(pass)) = self.compute_passes.get_mut(handle.0 as usize) {
-            pass.commands.push(RecordedComputeCommand::SetBindGroup { index, group });
+            pass.commands
+                .push(RecordedComputeCommand::SetBindGroup { index, group });
         }
     }
 
     fn dispatch(&mut self, handle: ComputePassHandle, x: u32, y: u32, z: u32) {
         if let Some(Some(pass)) = self.compute_passes.get_mut(handle.0 as usize) {
-            pass.commands.push(RecordedComputeCommand::Dispatch { x, y, z });
+            pass.commands
+                .push(RecordedComputeCommand::Dispatch { x, y, z });
         }
     }
 
