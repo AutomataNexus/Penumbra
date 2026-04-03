@@ -19,3 +19,7 @@ examples/wasm/pkg/
 
 # Benchmark output
 target/criterion/
+
+# Internal documentation — never commit
+PRD.md
+PROGRESS.md
