@@ -36,7 +36,6 @@ members = [
     "examples/globe",
     "examples/tactical_globe",
     "examples/wasm",
-    "examples/interactive_demo",
 ]
 
 [workspace.package]
@@ -119,9 +118,6 @@ path = "src/bin/gpu_probe.rs"
 name = "gpu_render_bench"
 path = "src/bin/gpu_render_bench.rs"
 
-[[bin]]
-name = "render_screenshots"
-path = "src/bin/render_screenshots.rs"
 
 # ── Benchmarks ──
 
