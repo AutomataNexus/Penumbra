@@ -1,0 +1,120 @@
+[package]
+name = "penumbra"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+description = "General-purpose 3D rendering SDK for Rust"
+
+[workspace]
+resolver = "2"
+members = [
+    "crates/penumbra-core",
+    "crates/penumbra-backend",
+    "crates/penumbra-wgpu",
+    "crates/penumbra-scene",
+    "crates/penumbra-pbr",
+    "crates/penumbra-instance",
+    "crates/penumbra-terrain",
+    "crates/penumbra-atmosphere",
+    "crates/penumbra-post",
+    "crates/penumbra-shadow",
+    "crates/penumbra-text",
+    "crates/penumbra-compute",
+    "crates/penumbra-geo",
+    "crates/penumbra-immediate",
+    "crates/penumbra-camera",
+    "crates/penumbra-asset",
+    "crates/penumbra-winit",
+    "crates/penumbra-web",
+    "examples/hello_cube",
+    "examples/pbr_scene",
+    "examples/instanced_entities",
+    "examples/globe",
+    "examples/tactical_globe",
+    "examples/wasm",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/AutomataNexus/Penumbra"
+rust-version = "1.85"
+
+[workspace.dependencies]
+# Math
+glam = { version = "0.29", features = ["serde"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# GPU
+wgpu = "24"
+
+# Windowing
+winit = "0.30"
+
+# Async
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+
+# Image
+image = "0.25"
+
+# Error handling
+thiserror = "2"
+
+# ECS-free ID management
+slotmap = "1"
+
+# Misc
+bytemuck = { version = "1", features = ["derive"] }
+pollster = "0.4"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+# ── Root package dependencies (for benchmarks) ──
+
+[dependencies]
+penumbra-core = { path = "crates/penumbra-core" }
+penumbra-backend = { path = "crates/penumbra-backend" }
+penumbra-wgpu = { path = "crates/penumbra-wgpu" }
+penumbra-scene = { path = "crates/penumbra-scene" }
+penumbra-pbr = { path = "crates/penumbra-pbr" }
+penumbra-instance = { path = "crates/penumbra-instance" }
+penumbra-terrain = { path = "crates/penumbra-terrain" }
+penumbra-atmosphere = { path = "crates/penumbra-atmosphere" }
+penumbra-post = { path = "crates/penumbra-post" }
+penumbra-shadow = { path = "crates/penumbra-shadow" }
+penumbra-text = { path = "crates/penumbra-text" }
+penumbra-compute = { path = "crates/penumbra-compute" }
+penumbra-geo = { path = "crates/penumbra-geo" }
+penumbra-immediate = { path = "crates/penumbra-immediate" }
+penumbra-camera = { path = "crates/penumbra-camera" }
+penumbra-asset = { path = "crates/penumbra-asset" }
+penumbra-winit = { path = "crates/penumbra-winit" }
+penumbra-web = { path = "crates/penumbra-web" }
+glam = { workspace = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+
+# ── Benchmarks ──
+
+[[bench]]
+name = "instancing"
+harness = false
+
+[[bench]]
+name = "tile_streaming"
+harness = false
+
+[[bench]]
+name = "full_scene"
+harness = false

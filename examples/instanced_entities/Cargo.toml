@@ -1,0 +1,17 @@
+[package]
+name = "instanced_entities"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+penumbra-core = { path = "../../crates/penumbra-core" }
+penumbra-backend = { path = "../../crates/penumbra-backend" }
+penumbra-wgpu = { path = "../../crates/penumbra-wgpu" }
+penumbra-camera = { path = "../../crates/penumbra-camera" }
+penumbra-instance = { path = "../../crates/penumbra-instance" }
+penumbra-asset = { path = "../../crates/penumbra-asset" }
+penumbra-pbr = { path = "../../crates/penumbra-pbr" }
+glam = { version = "0.29", features = ["serde"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"

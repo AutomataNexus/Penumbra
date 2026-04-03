@@ -1,0 +1,16 @@
+[package]
+name = "penumbra-text"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+description = "SDF text rendering for Penumbra"
+
+[dependencies]
+penumbra-core = { path = "../penumbra-core" }
+penumbra-backend = { path = "../penumbra-backend" }
+glam = { workspace = true }
+bytemuck = { workspace = true }
+serde = { workspace = true }

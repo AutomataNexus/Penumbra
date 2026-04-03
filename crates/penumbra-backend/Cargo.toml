@@ -1,0 +1,15 @@
+[package]
+name = "penumbra-backend"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+description = "RenderBackend trait — the GPU abstraction layer for Penumbra"
+
+[dependencies]
+thiserror = { workspace = true }
+glam = { workspace = true }
+bytemuck = { workspace = true }
+serde = { workspace = true }

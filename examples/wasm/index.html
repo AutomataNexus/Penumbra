@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penumbra WASM Example</title>
+    <style>
+        * { margin: 0; padding: 0; }
+        body { background: #1a1a2e; overflow: hidden; }
+        canvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #e0e0e0;
+            font-family: monospace;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="penumbra-canvas"></canvas>
+    <div id="info">Penumbra WASM — Loading...</div>
+    <script type="module">
+        import init from './pkg/penumbra_wasm_example.js';
+        async function run() {
+            try {
+                await init();
+                document.getElementById('info').textContent = 'Penumbra WASM — Running';
+            } catch (e) {
+                document.getElementById('info').textContent = 'Error: ' + e.message;
+                console.error(e);
+            }
+        }
+        run();
+    </script>
+</body>
+</html>

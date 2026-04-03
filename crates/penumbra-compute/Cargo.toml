@@ -1,0 +1,15 @@
+[package]
+name = "penumbra-compute"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+description = "Compute shader abstraction for Penumbra"
+
+[dependencies]
+penumbra-backend = { path = "../penumbra-backend" }
+glam = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }

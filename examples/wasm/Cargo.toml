@@ -1,0 +1,29 @@
+[package]
+name = "penumbra-wasm-example"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+penumbra-core = { path = "../../crates/penumbra-core" }
+penumbra-backend = { path = "../../crates/penumbra-backend" }
+penumbra-wgpu = { path = "../../crates/penumbra-wgpu" }
+penumbra-camera = { path = "../../crates/penumbra-camera" }
+penumbra-scene = { path = "../../crates/penumbra-scene" }
+penumbra-pbr = { path = "../../crates/penumbra-pbr" }
+penumbra-immediate = { path = "../../crates/penumbra-immediate" }
+penumbra-geo = { path = "../../crates/penumbra-geo" }
+penumbra-web = { path = "../../crates/penumbra-web" }
+glam = { version = "0.29", features = ["serde"] }
+tracing = "0.1"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tracing-subscriber = "0.3"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+console_error_panic_hook = "0.1"
+tracing-wasm = "0.2"

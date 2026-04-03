@@ -1,0 +1,18 @@
+[package]
+name = "penumbra-asset"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+description = "Asset loading pipeline for Penumbra"
+
+[dependencies]
+penumbra-core = { path = "../penumbra-core" }
+penumbra-backend = { path = "../penumbra-backend" }
+glam = { workspace = true }
+image = { workspace = true }
+gltf = "1"
+thiserror = { workspace = true }
+tracing = { workspace = true }

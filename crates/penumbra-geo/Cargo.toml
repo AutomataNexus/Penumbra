@@ -1,0 +1,13 @@
+[package]
+name = "penumbra-geo"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+description = "Geospatial utilities for Penumbra — WGS84, coordinate conversions, tile math"
+
+[dependencies]
+glam = { workspace = true }
+serde = { workspace = true }

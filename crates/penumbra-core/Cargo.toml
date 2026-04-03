@@ -1,0 +1,16 @@
+[package]
+name = "penumbra-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+description = "Core types, Renderer, and RenderFrame for Penumbra"
+
+[dependencies]
+penumbra-backend = { path = "../penumbra-backend" }
+glam = { workspace = true }
+bytemuck = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }

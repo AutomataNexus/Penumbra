@@ -1,0 +1,17 @@
+[package]
+name = "penumbra-scene"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+description = "Scene graph for Penumbra — hierarchical node tree with transforms and frustum culling"
+
+[dependencies]
+penumbra-core = { path = "../penumbra-core" }
+penumbra-backend = { path = "../penumbra-backend" }
+glam = { workspace = true }
+slotmap = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }
