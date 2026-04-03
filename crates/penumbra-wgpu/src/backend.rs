@@ -72,6 +72,9 @@ pub struct WgpuBackend {
     device: wgpu::Device,
     queue: wgpu::Queue,
     adapter: wgpu::Adapter,
+    surface: Option<wgpu::Surface<'static>>,
+    surface_config: Option<wgpu::SurfaceConfiguration>,
+    current_surface_texture: Option<wgpu::SurfaceTexture>,
     surface_format: TextureFormat,
     resources: Resources,
     next_id: u64,
@@ -117,6 +120,9 @@ impl WgpuBackend {
             device,
             queue,
             adapter,
+            surface: None,
+            surface_config: None,
+            current_surface_texture: None,
             surface_format: TextureFormat::Rgba8Unorm,
             resources: Resources::new(),
             next_id: 1,
@@ -125,6 +131,95 @@ impl WgpuBackend {
             width,
             height,
         })
+    }
+
+    /// Create a backend from a winit window with a real GPU surface.
+    pub fn from_window(
+        window: std::sync::Arc<winit::window::Window>,
+        config: WgpuConfig,
+    ) -> Result<Self, BackendError> {
+        let size = window.inner_size();
+        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+            backends: wgpu::Backends::VULKAN | wgpu::Backends::DX12 | wgpu::Backends::METAL,
+            ..Default::default()
+        });
+
+        let surface = instance
+            .create_surface(window)
+            .map_err(|e| BackendError::ResourceCreation(e.to_string()))?;
+
+        let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+            power_preference: config.power_preference,
+            compatible_surface: Some(&surface),
+            force_fallback_adapter: false,
+        }))
+        .ok_or(BackendError::NotInitialized)?;
+
+        let (device, queue) = pollster::block_on(adapter.request_device(
+            &wgpu::DeviceDescriptor {
+                label: Some("penumbra-wgpu"),
+                required_features: config.features,
+                required_limits: config.limits,
+                ..Default::default()
+            },
+            None,
+        ))
+        .map_err(|e| BackendError::ResourceCreation(e.to_string()))?;
+
+        let caps = surface.get_capabilities(&adapter);
+        let format = caps
+            .formats
+            .iter()
+            .find(|f| f.is_srgb())
+            .copied()
+            .unwrap_or(caps.formats[0]);
+
+        let surface_config = wgpu::SurfaceConfiguration {
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            format,
+            width: size.width.max(1),
+            height: size.height.max(1),
+            present_mode: config.present_mode,
+            alpha_mode: caps.alpha_modes[0],
+            view_formats: vec![],
+            desired_maximum_frame_latency: 2,
+        };
+        surface.configure(&device, &surface_config);
+
+        let penumbra_format = from_wgpu_texture_format(format);
+
+        info!(
+            adapter = adapter.get_info().name,
+            backend = ?adapter.get_info().backend,
+            format = ?format,
+            "WgpuBackend windowed initialized"
+        );
+
+        Ok(Self {
+            device,
+            queue,
+            adapter,
+            surface: Some(surface),
+            surface_config: Some(surface_config),
+            current_surface_texture: None,
+            surface_format: penumbra_format,
+            resources: Resources::new(),
+            next_id: 1,
+            render_passes: Vec::new(),
+            compute_passes: Vec::new(),
+            width: size.width,
+            height: size.height,
+        })
+    }
+
+    /// Get a reference to the wgpu device (for advanced usage).
+    pub fn device(&self) -> &wgpu::Device {
+        &self.device
+    }
+
+    /// Get a reference to the wgpu queue (for advanced usage).
+    pub fn queue(&self) -> &wgpu::Queue {
+        &self.queue
     }
 
     fn alloc_id(&mut self) -> u64 {
@@ -673,22 +768,44 @@ impl RenderBackend for WgpuBackend {
     }
 
     fn begin_frame(&mut self) -> Result<(), BackendError> {
-        // Clear recorded passes from the previous frame
         self.render_passes.clear();
         self.compute_passes.clear();
+
+        // Acquire surface texture if we have a surface
+        if let Some(surface) = &self.surface {
+            let texture = surface
+                .get_current_texture()
+                .map_err(|_| BackendError::SurfaceLost)?;
+
+            // Store a view of the surface texture as a resource so render passes can target it
+            let view = texture
+                .texture
+                .create_view(&wgpu::TextureViewDescriptor::default());
+            let surface_tex_id = 0u64; // reserved ID for the surface texture
+            self.resources.textures.insert(
+                surface_tex_id,
+                TextureData {
+                    texture: texture.texture.clone(),
+                    view,
+                    format: self.surface_format,
+                },
+            );
+            self.current_surface_texture = Some(texture);
+        }
         Ok(())
     }
 
     fn end_frame(&mut self) -> Result<(), BackendError> {
-        // In headless mode, nothing to finalize — all passes were submitted individually.
-        // With a surface, we'd wait for all command buffers to complete.
         self.device.poll(wgpu::Maintain::Wait);
         Ok(())
     }
 
     fn present(&mut self) -> Result<(), BackendError> {
-        // With a surface, this would call surface_texture.present().
-        // Headless mode has nothing to present.
+        // Remove the surface texture view from resources before presenting
+        self.resources.textures.remove(&0u64);
+        if let Some(texture) = self.current_surface_texture.take() {
+            texture.present();
+        }
         Ok(())
     }
 
@@ -1001,6 +1118,11 @@ impl RenderBackend for WgpuBackend {
     fn resize(&mut self, width: u32, height: u32) {
         self.width = width;
         self.height = height;
+        if let (Some(surface), Some(config)) = (&self.surface, &mut self.surface_config) {
+            config.width = width.max(1);
+            config.height = height.max(1);
+            surface.configure(&self.device, config);
+        }
     }
 
     fn surface_format(&self) -> TextureFormat {
@@ -1008,8 +1130,13 @@ impl RenderBackend for WgpuBackend {
     }
 
     fn surface_texture(&self) -> Result<TextureId, BackendError> {
-        Err(BackendError::InvalidOperation(
-            "Headless backend has no surface texture".to_string(),
-        ))
+        if self.surface.is_some() {
+            // ID 0 is reserved for the current surface texture, set in begin_frame
+            Ok(TextureId(0))
+        } else {
+            Err(BackendError::InvalidOperation(
+                "Headless backend has no surface texture".to_string(),
+            ))
+        }
     }
 }
