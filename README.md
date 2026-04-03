@@ -1,7 +1,10 @@
-# Penumbra
+<p align="center">
+  <img src="assets/logo.png" alt="Penumbra" width="280">
+</p>
 
-**General-purpose 3D rendering SDK for Rust.**
-The Three.js of the Rust ecosystem.
+<h1 align="center">Penumbra</h1>
+
+<p align="center"><strong>General-purpose 3D rendering SDK for Rust.</strong></p>
 
 Penumbra sits between raw GPU bindings (wgpu) and full game engines (Bevy). It provides a complete 3D rendering toolkit that works natively on desktop (Vulkan, Metal, DX12) and in the browser (WebGPU, WebGL2 via WASM), with no game engine baggage, no ECS mandate, and no opinionated application framework.
 
